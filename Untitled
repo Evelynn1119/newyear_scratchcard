@@ -1,0 +1,12 @@
+Phase B: The "Finish & Share" System
+This creates the "Ready to Ship" moment.
+
+Prompt for Cursor:
+
+"I need to build the 'Finalize' flow.
+
+Finish Button: Place a prominent 'Finish & Generate Gift' button at the bottom-middle of the left panel.
+
+Packaging Data: When clicked, this button should serialize the 7-day canvas designs (JSON/Base64) and the lock-dates into a shareable URL or a database entry.
+
+Share Modal: After clicking 'Finish', replace the editor panel with a 'Success' view. This view should feature a 'Copy Share Link' button and a preview of the unique gift URL for their friend."

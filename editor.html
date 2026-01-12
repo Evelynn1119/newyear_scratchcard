@@ -1,0 +1,2745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gift Card Creator</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CCMETCON Font (if custom, will fallback to bold sans-serif) -->
+  <style>
+    @font-face {
+      font-family: 'CCMETCON';
+      src: local('CCMETCON'), url('CCMETCON.woff2') format('woff2'), url('CCMETCON.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+  
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel for JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <style>
+    :root {
+      /* Dreamy Boutique Brand Colors */
+      --main-pink: #FED5D4;
+      --main-red: #E4412D;
+      --accent-aqua: #AEEEEE;
+      --secondary-white: #F9F0F0;
+      
+      /* Derived Colors for UI */
+      --pink-light: #FED5D4;
+      --pink: #FED5D4;
+      --pink-medium: #F9C5C4;
+      --pink-dark: #E4412D;
+      --red: #E4412D;
+      --aqua: #AEEEEE;
+      --white-soft: #F9F0F0;
+      --gold: #E4412D;
+      --gold-light: #FED5D4;
+      --cream: #F9F0F0;
+      --warm-brown: #E4412D;
+      --text-dark: #4a3f44;
+      --text-light: #7d6b70;
+      --success: #10b981;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: var(--secondary-white);
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ========== LAYOUT ========== */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+    }
+
+    /* ========== LEFT PANEL ========== */
+    .left-panel {
+      width: 340px;
+      min-width: 340px;
+      background: white;
+      border-right: 1px solid var(--main-pink);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 30px rgba(254, 213, 212, 0.2);
+      flex-shrink: 0;
+    }
+
+    /* Ensure right panel fills remaining space */
+    @media (min-width: 769px) {
+      .right-panel {
+        width: calc(100% - 340px);
+      }
+    }
+
+    .panel-header {
+      padding: 1.5rem;
+      text-align: center;
+      border-bottom: none;
+      position: relative;
+    }
+
+    .panel-header h1 {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--main-red);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .panel-header .subtitle {
+      display: none;
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      opacity: 1;
+      transform: translateY(-50%) translateX(-2px);
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .panel-footer {
+      padding: 1.5rem;
+      border-top: none;
+      background: transparent;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ========== SECTIONS ========== */
+    .section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-light);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--pink);
+    }
+
+    /* ========== DAY LIST ========== */
+    .day-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .day-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      background: var(--secondary-white);
+      border: 2px solid var(--main-red);
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      min-height: 70px;
+    }
+
+    .day-item:hover {
+      border-color: var(--main-red);
+      transform: scale(1.02);
+    }
+
+    .day-item.completed {
+      background: var(--secondary-white);
+      border-color: var(--main-red);
+      opacity: 0.5;
+      pointer-events: auto;
+    }
+
+    .day-item.completed:hover {
+      transform: none;
+      border-color: var(--main-red);
+    }
+
+    .day-item .day-content {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex: 1;
+    }
+
+    .day-item .day-label {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--main-red);
+      text-transform: uppercase;
+      margin: 0;
+      padding: 0;
+    }
+
+    .day-item .status {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.7rem;
+      color: var(--main-red);
+      margin-top: 0.25rem;
+      text-decoration: underline;
+      text-transform: uppercase;
+    }
+
+    .day-item .arrow {
+      width: 0;
+      height: 0;
+      border-left: 8px solid var(--main-red);
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+      margin-left: 1rem;
+    }
+
+    .day-item .emoji {
+      display: none;
+    }
+
+    /* ========== SCHEDULE BOX ========== */
+    .schedule-box {
+      background: var(--secondary-white);
+      border: 1px solid var(--accent-aqua);
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+
+    .schedule-box label {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-light);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .schedule-box input[type="date"] {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--pink);
+      border-radius: 0.4rem;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.85rem;
+      color: var(--text-dark);
+      background: white;
+    }
+
+    .schedule-box input[type="date"]:focus {
+      outline: none;
+      border-color: var(--accent-aqua);
+    }
+
+    .schedule-info {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px dashed var(--pink);
+      font-size: 0.7rem;
+      color: var(--text-light);
+    }
+
+    .schedule-info .day-unlock {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+    }
+
+    /* ========== EDIT FORM ========== */
+    .edit-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .edit-section h3 {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--main-red);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--main-red);
+    }
+
+    .template-grid {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: space-between;
+    }
+
+    .template-btn {
+      flex: 1;
+      aspect-ratio: 1;
+      background: white;
+      border: 2px solid var(--main-pink);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .template-btn img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .template-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(254, 213, 212, 0);
+      transition: background 0.2s ease;
+      pointer-events: none;
+    }
+
+    .template-btn:hover::after {
+      background: rgba(254, 213, 212, 0.3);
+    }
+
+    .template-btn:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .template-btn.active {
+      border-color: var(--main-red);
+      border-width: 3px;
+      box-shadow: 0 4px 12px rgba(228, 65, 45, 0.2);
+    }
+
+    .template-btn .icon,
+    .template-btn .label {
+      display: none;
+    }
+
+    .input-group {
+      margin-bottom: 0.6rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--text-light);
+      margin-bottom: 0.25rem;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      background: white;
+      border: 1px solid var(--pink);
+      border-radius: 0.4rem;
+      color: var(--text-dark);
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .input-group textarea {
+      min-height: 70px;
+      resize: vertical;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+      outline: none;
+      border-color: var(--main-red);
+      box-shadow: 0 0 0 3px rgba(228, 65, 45, 0.1);
+    }
+
+    .photo-options {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .photo-upload-area {
+      flex: 1;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 0.6rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-upload-area:hover {
+      border-color: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .photo-upload-area input { display: none; }
+    .photo-upload-area .upload-text { 
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+    }
+
+    .photo-camera-area {
+      flex: 1;
+      background: white;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 0.6rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23E4412D' stroke-width='2'%3E%3Cpath d='M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z'/%3E%3Ccircle cx='12' cy='13' r='4'/%3E%3C/svg%3E") 12 12, auto;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .photo-camera-area:hover {
+      border-color: var(--main-red);
+      background: rgba(228, 65, 45, 0.05);
+    }
+
+    .photo-camera-area input { display: none; }
+    .photo-camera-area .camera-text { 
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+    }
+
+    .photo-preview-box {
+      margin-top: 0.6rem;
+      border-radius: 0.4rem;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--pink);
+    }
+
+    .photo-preview-box img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+    }
+
+    .photo-preview-box .remove-btn {
+      position: absolute;
+      top: 0.4rem;
+      right: 0.4rem;
+      background: rgba(220, 38, 38, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0.35rem;
+    }
+
+    .emoji-btn {
+      aspect-ratio: 1;
+      background: white;
+      border: 1px solid var(--pink);
+      border-radius: 0.35rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      padding: 0.25rem;
+      overflow: hidden;
+    }
+
+    .emoji-btn:hover {
+      border-color: var(--main-red);
+      transform: scale(1.1);
+      background: var(--main-pink);
+    }
+
+    /* ========== BUTTONS ========== */
+    .btn-primary {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--main-red);
+      border: none;
+      border-radius: 0.5rem;
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(228, 65, 45, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(228, 65, 45, 0.4);
+    }
+
+    .btn-gold {
+      width: auto;
+      min-width: 280px;
+      padding: 1rem 2rem;
+      background: var(--main-red);
+      border: none;
+      border-radius: 1rem;
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(228, 65, 45, 0.3);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(228, 65, 45, 0.4);
+    }
+
+    /* ========== RIGHT PANEL ========== */
+    .right-panel {
+      flex: 1;
+      flex-grow: 1;
+      min-width: 0; /* Allows flex item to shrink below content size */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+      overflow-y: auto; /* Allow vertical scrolling if needed */
+    }
+
+    /* Responsive: Mobile */
+    @media (max-width: 768px) {
+      .right-panel {
+        min-width: 320px;
+        padding: 20px;
+        width: 100%;
+      }
+    }
+
+    /* Very small screens */
+    @media (max-width: 480px) {
+      .right-panel {
+        padding: 15px;
+      }
+    }
+
+    .right-panel-text {
+      position: absolute;
+      font-family: 'CCMETCON', 'Quicksand', sans-serif;
+      font-weight: 700;
+      color: var(--main-red);
+      pointer-events: none;
+      z-index: 1;
+      max-width: 600px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    .right-panel-text.top-right {
+      top: 2rem;
+      right: 2rem;
+      text-align: right;
+      font-size: 60px;
+      line-height: 1.2;
+      white-space: normal; /* Allow wrapping */
+      transform-origin: top right;
+      margin-left: auto;
+    }
+
+    .right-panel-text.bottom-left {
+      bottom: 2rem;
+      left: 2rem;
+      text-align: left;
+      font-size: 90px;
+      line-height: 1.2;
+      white-space: normal; /* Allow wrapping */
+      transform-origin: bottom left;
+      margin-right: auto;
+    }
+
+    /* Responsive text sizing */
+    @media (max-width: 1024px) {
+      .right-panel-text.top-right {
+        font-size: 48px;
+        max-width: 500px;
+      }
+      .right-panel-text.bottom-left {
+        font-size: 72px;
+        max-width: 500px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .right-panel-text.top-right {
+        font-size: 36px;
+        max-width: calc(100% - 40px);
+        right: 20px;
+        top: 20px;
+      }
+      .right-panel-text.bottom-left {
+        font-size: 54px;
+        max-width: calc(100% - 40px);
+        left: 20px;
+        bottom: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .right-panel-text.top-right {
+        font-size: 28px;
+      }
+      .right-panel-text.bottom-left {
+        font-size: 42px;
+      }
+    }
+
+    /* ========== CARD PREVIEW ========== */
+    .card-preview {
+      width: 320px;
+      height: 560px;
+      background: var(--main-pink);
+      border-radius: 1rem;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-preview.stars-pattern::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .card-preview.clovers-pattern::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .card-preview.hearts-pattern::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .card-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 1.75rem 1.25rem;
+      overflow: hidden;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: white;
+      text-align: center;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1rem;
+      letter-spacing: 1px;
+    }
+
+    .card-photo-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .card-photo-frame {
+      background: white;
+      padding: 5px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-photo-frame img {
+      display: block;
+      max-width: 220px;
+      max-height: 280px;
+      object-fit: contain;
+    }
+
+    .card-photo-placeholder {
+      width: 160px;
+      height: 210px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 2px dashed rgba(255, 255, 255, 0.25);
+      border-radius: 0.4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .card-photo-placeholder .icon { font-size: 1.75rem; margin-bottom: 0.4rem; }
+    .card-photo-placeholder .text { font-size: 0.7rem; }
+
+    .card-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: white;
+      text-align: center;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      margin-top: 1rem;
+      line-height: 1.4;
+    }
+
+    .card-sticker {
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.1s;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .card-sticker img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+    }
+
+    .card-sticker:hover { transform: scale(1.05); }
+    .card-sticker.dragging { cursor: grabbing; }
+    .card-sticker.resizing { cursor: nwse-resize; }
+
+    .card-sticker .delete-x {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: rgba(220, 38, 38, 0.9);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+
+    .card-sticker:hover .delete-x { opacity: 1; }
+
+    .card-sticker .resize-handle {
+      position: absolute;
+      bottom: -6px;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      background: var(--main-red);
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: nwse-resize;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+    }
+
+    .card-sticker:hover .resize-handle { opacity: 1; }
+
+    .card-sticker .rotate-handle {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      background: var(--accent-aqua);
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+    }
+
+    .card-sticker .rotate-handle::before {
+      content: '⟳';
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .card-sticker:hover .rotate-handle { opacity: 1; }
+    .card-sticker.rotating .rotate-handle { cursor: grabbing; opacity: 1; }
+
+    .empty-preview {
+      text-align: center;
+      color: var(--text-light);
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 20px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .empty-preview .icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.4; }
+
+    .empty-preview h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1.4rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .empty-preview p { font-size: 0.8rem; opacity: 0.6; }
+
+    /* ========== PREVIEW MODE (After Finish) ========== */
+    .preview-mode {
+      min-height: 100vh;
+      background: var(--secondary-white);
+      padding: 2rem;
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      box-sizing: border-box;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto 2rem;
+      padding: 0 20px;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .preview-mode {
+        padding: 20px;
+      }
+      .preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
+    .preview-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 2rem;
+      color: var(--text-dark);
+      letter-spacing: 2px;
+      max-width: 600px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      margin: 0;
+    }
+
+    .preview-header p {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      margin-top: 0.25rem;
+      max-width: 600px;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    @media (max-width: 768px) {
+      .preview-header h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .share-btn {
+      padding: 0.7rem 1.5rem;
+      background: var(--accent-aqua);
+      border: none;
+      border-radius: 2rem;
+      color: var(--text-dark);
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(174, 238, 238, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(174, 238, 238, 0.4);
+    }
+
+    .edit-btn {
+      padding: 0.7rem 1.5rem;
+      background: white;
+      border: 2px solid var(--main-red);
+      border-radius: 2rem;
+      color: var(--text-dark);
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .edit-btn:hover {
+      background: var(--main-red);
+      color: white;
+    }
+
+    /* Artwork Grid */
+    .artwork-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 20px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+      .artwork-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        padding: 0 15px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .artwork-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 10px;
+      }
+    }
+
+    .artwork-card {
+      position: relative;
+      aspect-ratio: 1;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .artwork-card:hover {
+      transform: scale(1.05);
+    }
+
+    .artwork-card:hover .artwork-image {
+      animation: giggle 0.4s ease-in-out;
+    }
+
+    @keyframes giggle {
+      0%, 100% { transform: rotate(0deg); }
+      20% { transform: rotate(-3deg); }
+      40% { transform: rotate(3deg); }
+      60% { transform: rotate(-2deg); }
+      80% { transform: rotate(2deg); }
+    }
+
+    .artwork-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.2));
+      transition: transform 0.3s;
+    }
+
+    .artwork-card.revealed .artwork-image {
+      opacity: 0.3;
+    }
+
+    .artwork-day-label {
+      position: absolute;
+      bottom: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.9rem;
+      color: var(--text-light);
+      white-space: nowrap;
+    }
+
+    .artwork-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .artwork-card:hover .artwork-overlay {
+      opacity: 1;
+    }
+
+    .artwork-overlay .scratch-hint {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .artwork-card.revealed .artwork-overlay {
+      opacity: 1;
+      background: rgba(174, 238, 238, 0.8);
+    }
+
+    .lock-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+
+    .lock-overlay .lock-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .lock-overlay .lock-text { font-size: 0.7rem; text-align: center; padding: 0 0.5rem; }
+
+    /* ========== SHARE MODAL ========== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    /* Happy New Year modal should appear on top of everything */
+    .happy-new-year-overlay {
+      z-index: 3000 !important;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .share-modal {
+      background: white;
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .modal-close:hover { opacity: 1; }
+
+    /* ========== HAPPY NEW YEAR MODAL ========== */
+    .happy-new-year-modal {
+      background: var(--secondary-white);
+      border-radius: 1.5rem;
+      padding: 3rem 2rem;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.5s ease;
+      position: relative;
+      text-align: center;
+      cursor: default;
+      transition: transform 0.2s ease;
+    }
+
+    .happy-new-year-modal:hover {
+      transform: scale(1.02);
+    }
+
+    .happy-new-year-modal:active {
+      transform: scale(0.98);
+    }
+
+    /* Fade out animation for closing */
+    .happy-new-year-overlay.closing {
+      animation: fadeOut 0.3s ease forwards;
+    }
+
+    .happy-new-year-overlay.closing .happy-new-year-modal {
+      animation: slideDown 0.3s ease forwards;
+    }
+
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+
+    @keyframes slideDown {
+      from { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+      to { 
+        opacity: 0;
+        transform: translateY(20px);
+      }
+    }
+
+    .happy-new-year-modal h2 {
+      font-family: 'CCMETCON', 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 3rem;
+      color: var(--main-red);
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .happy-new-year-modal p {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.1rem;
+      color: var(--text-dark);
+      margin: 0;
+    }
+
+    @media (max-width: 768px) {
+      .happy-new-year-modal {
+        padding: 2.5rem 1.5rem;
+      }
+      .happy-new-year-modal h2 {
+        font-size: 2.5rem;
+      }
+      .happy-new-year-modal p {
+        font-size: 1rem;
+      }
+    }
+
+    .share-modal h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 1.5rem;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .share-modal p {
+      font-size: 0.85rem;
+      color: var(--text-light);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .share-url-box {
+      background: var(--secondary-white);
+      border: 1px solid var(--main-pink);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      word-break: break-all;
+      font-size: 0.75rem;
+      color: var(--text-dark);
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--main-red);
+      border: none;
+      border-radius: 0.5rem;
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .copy-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .copy-btn.copied {
+      background: var(--success);
+    }
+
+    /* ========== DATE PICKER MODAL ========== */
+    .date-modal {
+      background: var(--secondary-white);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    .date-modal h2 {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-dark);
+      margin-bottom: 1rem;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .date-input-wrapper {
+      margin-bottom: 1rem;
+    }
+
+    .date-input-wrapper label {
+      display: block;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .date-input-wrapper input[type="date"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid var(--main-pink);
+      border-radius: 0.5rem;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .date-input-wrapper input[type="date"]:focus {
+      outline: none;
+      border-color: var(--main-red);
+      box-shadow: 0 0 0 3px rgba(254, 213, 212, 0.3);
+    }
+
+    .date-preview {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-align: center;
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+    }
+
+    .date-preview strong {
+      color: var(--text-dark);
+    }
+
+    .confirm-date-btn {
+      width: 100%;
+      padding: 0.85rem;
+      background: var(--main-red);
+      border: none;
+      border-radius: 0.5rem;
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .confirm-date-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(228, 65, 45, 0.4);
+    }
+
+    .confirm-date-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ========== CAMERA PERMISSION MODAL ========== */
+    .camera-permission-modal {
+      background: var(--secondary-white);
+      border-radius: 1rem;
+      padding: 2rem;
+      width: 90%;
+      max-width: 320px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    .camera-permission-modal p {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      text-align: center;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .camera-permission-buttons {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .permission-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .permission-btn.no {
+      background: white;
+      border: 2px solid var(--main-pink);
+      color: var(--text-dark);
+    }
+
+    .permission-btn.no:hover {
+      background: var(--main-pink);
+    }
+
+    .permission-btn.yes {
+      background: var(--main-red);
+      color: white;
+    }
+
+    .permission-btn.yes:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(228, 65, 45, 0.4);
+    }
+
+    /* ========== CAMERA VIEWFINDER ========== */
+    .camera-viewfinder {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .camera-video-container {
+      position: relative;
+      width: 90%;
+      max-width: 600px;
+      aspect-ratio: 4/3;
+      background: #000;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+    }
+
+    .camera-video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .camera-controls {
+      margin-top: 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .camera-capture-btn {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      border: 4px solid white;
+      background: var(--main-red);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .camera-capture-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px rgba(228, 65, 45, 0.6);
+    }
+
+    .camera-capture-btn:active {
+      transform: scale(0.95);
+    }
+
+    .camera-close-btn {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid white;
+      border-radius: 2rem;
+      color: white;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .camera-close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ========== SCRATCH OVERLAY ========== */
+    .scratch-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .scratch-container {
+      position: relative;
+      z-index: 10;
+    }
+
+    .scratch-underlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .scratch-underlay.visible {
+      opacity: 1;
+    }
+
+    .scratch-canvas {
+      display: block;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='37' height='37' viewBox='0 0 100 100' fill='%23E4412D'%3E%3Cpath d='M50 10c-8 0-15 4-18 12l-8 20c-3 5-3 11 0 16l5 12c2 3 5 5 8 5h12c3 0 6-2 8-5l5-12c3-5 3-11 0-16l-8-20c-3-8-10-12-18-12zm-20 30c-4 0-7 3-7 7v20c0 4 3 7 7 7h40c4 0 7-3 7-7V47c0-4-3-7-7-7H30zm-8 30c-3 0-5 2-5 5v15c0 3 2 5 5 5h56c3 0 5-2 5-5V75c0-3-2-5-5-5H22z'/%3E%3C/svg%3E") 18.5 18.5, auto;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      position: relative;
+      z-index: 10;
+    }
+
+    .scratch-progress {
+      text-align: center;
+      margin-top: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.85rem;
+    }
+
+    .close-scratch {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+
+    .close-scratch:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ========== REVEAL COMPLETE ========== */
+    .reveal-complete {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .reveal-complete .card-preview {
+      animation: revealPop 0.5s ease-out;
+    }
+
+    @keyframes revealPop {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .reveal-complete .hint {
+      position: absolute;
+      bottom: 2rem;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+    }
+
+    /* Glitter Effect */
+    .glitter-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1001;
+    }
+
+    .glitter {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: var(--accent-aqua);
+      border-radius: 50%;
+      animation: glitterFall 2s ease-out forwards;
+    }
+
+    @keyframes glitterFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(100px) rotate(360deg); }
+    }
+
+    /* Scrollbar */
+    .panel-content::-webkit-scrollbar { width: 4px; }
+    .panel-content::-webkit-scrollbar-track { background: var(--pink-light); }
+    .panel-content::-webkit-scrollbar-thumb { background: var(--pink); border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ========== CONFIG ==========
+    const DAYS_CONFIG = [
+      { id: 1, emoji: '🤠', artwork: 'artwork1.png' },
+      { id: 2, emoji: '🧣', artwork: 'artwork2.png' },
+      { id: 3, emoji: '👧', artwork: 'artwork3.png' },
+      { id: 4, emoji: '👢', artwork: 'artwork4.png' },
+      { id: 5, emoji: '🐴', artwork: 'artwork5.png' },
+      { id: 6, emoji: '🍀', artwork: 'artwork6.png' },
+    ];
+
+    const TEMPLATES = [
+      { id: 'template1', icon: '', label: 'Template 1', bgColor: '#FED5D4', pattern: 'stars-pattern', image: 'template1.jpg' },
+      { id: 'template2', icon: '', label: 'Template 2', bgColor: '#F9F0F0', pattern: '', image: 'template2.jpg' },
+      { id: 'template3', icon: '', label: 'Template 3', bgColor: '#AEEEEE', pattern: 'clovers-pattern', image: 'template4.jpg' },
+      { id: 'template4', icon: '', label: 'Template 4', bgColor: '#FED5D4', pattern: 'hearts-pattern', image: 'template4-1.jpg' },
+    ];
+
+    const STICKERS = [
+      'sticker.png', 'sticker2.png', 'sticker3.png', 'sticker4.png', 'sticker5.png', 'sticker6.png',
+      'sticker7.png', 'sticker8.png', 'sticker9.png', 'sticker10.png', 'sticker11.png', 'sticker12.png',
+      'sticker13.png', 'sticker14.png'
+    ];
+
+    // ========== UTILITIES ==========
+    function isCardLocked(dayNumber, startDate) {
+      if (!startDate) return false;
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const unlockDate = new Date(start);
+      unlockDate.setDate(start.getDate() + (dayNumber - 1));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today < unlockDate;
+    }
+
+    function getUnlockDate(dayNumber, startDate) {
+      if (!startDate) return null;
+      const start = new Date(startDate);
+      const unlockDate = new Date(start);
+      unlockDate.setDate(start.getDate() + (dayNumber - 1));
+      return unlockDate;
+    }
+
+    function formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function generateShareURL(giftData) {
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(giftData))));
+      const baseUrl = window.location.origin + window.location.pathname;
+      return `${baseUrl}?gift=${encoded}`;
+    }
+
+    function parseGiftFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const giftParam = params.get('gift');
+      if (giftParam) {
+        try {
+          return JSON.parse(decodeURIComponent(escape(atob(giftParam))));
+        } catch (e) {
+          console.error('Failed to parse gift data');
+        }
+      }
+      return null;
+    }
+
+    // ========== MAIN APP ==========
+    function App() {
+      const [giftData] = useState(() => parseGiftFromURL());
+      const isRecipientMode = giftData !== null;
+
+      // Modes: 'editor', 'preview'
+      const [mode, setMode] = useState(isRecipientMode ? 'preview' : 'editor');
+      const [editorView, setEditorView] = useState('list');
+      const [editingDay, setEditingDay] = useState(null);
+      
+      // Share modal
+      const [showShareModal, setShowShareModal] = useState(false);
+      const [shareURL, setShareURL] = useState('');
+      const [copied, setCopied] = useState(false);
+      
+      // Date picker modal
+      const [showDateModal, setShowDateModal] = useState(false);
+      const [tempStartDate, setTempStartDate] = useState('');
+      
+      // Camera modals
+      const [showCameraView, setShowCameraView] = useState(false);
+      const [cameraStream, setCameraStream] = useState(null);
+      const videoRef = useRef(null);
+
+      // Session data
+      const [session, setSession] = useState(() => {
+        if (isRecipientMode) return giftData;
+        const saved = localStorage.getItem('lnyGiftSession');
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return {
+          startDate: '',
+          cards: {
+            1: { template: 'template1', title: 'I LOVE YOU', subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', photo: null, emojis: [], completed: false },
+            2: { template: 'template2', title: 'THIS IS MY PLAY LIST !', subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', photo: 'PLAYLIST.jpg', emojis: [], completed: false },
+            3: { template: 'template3', title: 'The Lucky Charm', subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', photo: null, emojis: [], completed: false },
+            4: { template: 'template4', title: 'A LITTLE GIFT FROM ME', subtitle: 'SEND THEM A DIGITAL GIFT CARD !', photo: null, emojis: [], completed: false },
+            5: { template: 'template1', title: 'A LITTLE MESSAGE FROM ME', subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', photo: null, emojis: [], completed: false },
+            6: { template: 'template2', title: 'THIS IS MY TREAT', subtitle: 'A LITTLE DATE WITH ME SAVED!', photo: null, emojis: [], completed: false },
+          }
+        };
+      });
+
+      // Revealed cards
+      const [revealedCards, setRevealedCards] = useState(() => {
+        const saved = localStorage.getItem('lnyRevealedCards');
+        if (saved) {
+          try { return JSON.parse(saved); } catch (e) {}
+        }
+        return {};
+      });
+
+      // Scratch overlay
+      const [scratchingDay, setScratchingDay] = useState(null);
+      const [viewingDay, setViewingDay] = useState(null);
+      
+      // Happy New Year modal
+      const [showHappyNewYear, setShowHappyNewYear] = useState(false);
+      const [isClosing, setIsClosing] = useState(false);
+
+      const currentCard = editingDay ? session.cards[editingDay] : null;
+
+      const updateCard = (field, value) => {
+        if (!editingDay) return;
+        setSession(prev => ({
+          ...prev,
+          cards: {
+            ...prev.cards,
+            [editingDay]: { ...prev.cards[editingDay], [field]: value }
+          }
+        }));
+      };
+
+      const updateStartDate = (date) => {
+        setSession(prev => ({ ...prev, startDate: date }));
+      };
+
+      const handleSelectDay = (dayId) => {
+        setEditingDay(dayId);
+        setEditorView('edit');
+      };
+
+      const handleBackToList = () => {
+        if (editingDay && currentCard) {
+          const hasContent = currentCard.title || currentCard.photo || currentCard.emojis.length > 0;
+          updateCard('completed', hasContent);
+        }
+        setEditorView('list');
+        setEditingDay(null);
+      };
+
+      const handleSaveCard = () => {
+        updateCard('completed', true);
+        localStorage.setItem('lnyGiftSession', JSON.stringify(session));
+        handleBackToList();
+      };
+
+      // FINISH & GENERATE
+      const handleFinish = () => {
+        setTempStartDate(session.startDate || '');
+        setShowDateModal(true);
+      };
+
+      // Confirm date and generate
+      const handleConfirmDate = () => {
+        if (!tempStartDate) return;
+        
+        const updatedSession = {
+          ...session,
+          startDate: tempStartDate
+        };
+        
+        setSession(updatedSession);
+        localStorage.setItem('lnyGiftSession', JSON.stringify(updatedSession));
+        const url = generateShareURL(updatedSession);
+        setShareURL(url);
+        setShowDateModal(false);
+        setMode('preview');
+      };
+
+      // Get unlock date preview
+      const getUnlockPreview = (dayNumber) => {
+        if (!tempStartDate) return '';
+        const start = new Date(tempStartDate);
+        const unlockDate = new Date(start);
+        unlockDate.setDate(start.getDate() + (dayNumber - 1));
+        return unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      };
+
+      // Open share modal
+      const handleOpenShare = () => {
+        const url = generateShareURL(session);
+        setShareURL(url);
+        setShowShareModal(true);
+      };
+
+      // Copy link
+      const handleCopyLink = () => {
+        navigator.clipboard.writeText(shareURL);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      // Scratch card click
+      const handleArtworkClick = (dayId) => {
+        if (isCardLocked(dayId, session.startDate)) return;
+        if (revealedCards[dayId]) {
+          setViewingDay(dayId);
+        } else {
+          setScratchingDay(dayId);
+        }
+      };
+
+      // Check if all cards are revealed
+      const checkAllCardsRevealed = (revealed) => {
+        const allRevealed = DAYS_CONFIG.every(day => revealed[day.id] === true);
+        if (allRevealed) {
+          // Check if popup has already been shown (only show once)
+          const popupShownKey = 'lnyHappyNewYearShown';
+          const hasBeenShown = localStorage.getItem(popupShownKey) === 'true';
+          
+          if (!hasBeenShown) {
+            // Show popup after a short delay so user can see the last card first
+            setTimeout(() => {
+              setShowHappyNewYear(true);
+              setIsClosing(false);
+              // Mark as shown so it only appears once
+              localStorage.setItem(popupShownKey, 'true');
+            }, 1500); // 1.5 second delay
+          }
+        }
+      };
+
+      // Close Happy New Year popup with animation
+      const handleCloseHappyNewYear = useCallback(() => {
+        setIsClosing(true);
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+          setShowHappyNewYear(false);
+          setIsClosing(false);
+          setViewingDay(null); // Reset to original view (cards grid)
+        }, 300); // Match animation duration
+      }, []);
+
+      // Escape key handler
+      useEffect(() => {
+        const handleEscape = (e) => {
+          if (e.key === 'Escape' && showHappyNewYear) {
+            handleCloseHappyNewYear();
+          }
+        };
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+      }, [showHappyNewYear, handleCloseHappyNewYear]);
+
+      // Scratch complete
+      const handleScratchComplete = (dayId) => {
+        const newRevealed = { ...revealedCards, [dayId]: true };
+        setRevealedCards(newRevealed);
+        localStorage.setItem('lnyRevealedCards', JSON.stringify(newRevealed));
+        setScratchingDay(null);
+        setViewingDay(dayId);
+        // Check if all cards are revealed - popup will appear automatically
+        checkAllCardsRevealed(newRevealed);
+      };
+
+      const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => updateCard('photo', e.target.result);
+          reader.readAsDataURL(file);
+        }
+      };
+
+      // Camera handlers
+      const handleCameraClick = async (e) => {
+        e.preventDefault();
+        try {
+          // Request camera access directly (browser will show permission prompt)
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } 
+          });
+          setCameraStream(stream);
+          setShowCameraView(true);
+          // Set video source after a brief delay to ensure ref is ready
+          setTimeout(() => {
+            if (videoRef.current) {
+              videoRef.current.srcObject = stream;
+            }
+          }, 100);
+        } catch (err) {
+          console.error('Camera access denied:', err);
+          alert('Camera access was denied. Please allow camera access to take photos.');
+        }
+      };
+
+      const handleCapturePhoto = () => {
+        if (videoRef.current) {
+          const canvas = document.createElement('canvas');
+          canvas.width = videoRef.current.videoWidth;
+          canvas.height = videoRef.current.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(videoRef.current, 0, 0);
+          const dataURL = canvas.toDataURL('image/png');
+          updateCard('photo', dataURL);
+          handleCloseCamera();
+        }
+      };
+
+      const handleCloseCamera = () => {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          setCameraStream(null);
+        }
+        setShowCameraView(false);
+      };
+
+      // Set up video stream when camera view opens
+      useEffect(() => {
+        if (showCameraView && cameraStream && videoRef.current) {
+          videoRef.current.srcObject = cameraStream;
+        }
+      }, [showCameraView, cameraStream]);
+
+      // Cleanup camera stream on unmount
+      useEffect(() => {
+        return () => {
+          if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+          }
+        };
+      }, [cameraStream]);
+
+      // Check if all cards are revealed on mount or when revealedCards changes
+      useEffect(() => {
+        if (mode === 'preview' && !showHappyNewYear) {
+          const allRevealed = DAYS_CONFIG.every(day => revealedCards[day.id] === true);
+          if (allRevealed) {
+            // Check if popup has already been shown (only show once)
+            const popupShownKey = 'lnyHappyNewYearShown';
+            const hasBeenShown = localStorage.getItem(popupShownKey) === 'true';
+            
+            if (!hasBeenShown) {
+              // Show immediately on mount if all cards are already revealed
+              setShowHappyNewYear(true);
+              setIsClosing(false);
+              // Mark as shown so it only appears once
+              localStorage.setItem(popupShownKey, 'true');
+            }
+          }
+        }
+      }, [mode, revealedCards, showHappyNewYear]);
+
+      const addSticker = (stickerPath) => {
+        if (!editingDay) return;
+        const newSticker = {
+          id: Date.now(),
+          image: stickerPath,
+          x: 40 + Math.random() * 160,
+          y: 80 + Math.random() * 260,
+          width: 60,
+          height: 60,
+          rotation: 0,
+        };
+        updateCard('emojis', [...(currentCard.emojis || []), newSticker]);
+      };
+
+      const updateStickerPos = (stickerId, x, y) => {
+        if (!editingDay) return;
+        updateCard('emojis', currentCard.emojis.map(e => 
+          e.id === stickerId ? { ...e, x, y } : e
+        ));
+      };
+
+      const updateStickerSize = (stickerId, width, height) => {
+        if (!editingDay) return;
+        updateCard('emojis', currentCard.emojis.map(e => 
+          e.id === stickerId ? { ...e, width, height } : e
+        ));
+      };
+
+      const updateStickerRotation = (stickerId, rotation) => {
+        if (!editingDay) return;
+        updateCard('emojis', currentCard.emojis.map(e => 
+          e.id === stickerId ? { ...e, rotation } : e
+        ));
+      };
+
+      const deleteSticker = (stickerId) => {
+        if (!editingDay) return;
+        updateCard('emojis', currentCard.emojis.filter(e => e.id !== stickerId));
+      };
+
+      const currentTemplate = currentCard 
+        ? TEMPLATES.find(t => t.id === currentCard.template) 
+        : null;
+
+      // ========== PREVIEW MODE ==========
+      if (mode === 'preview') {
+        return (
+          <>
+            <div className="preview-mode">
+              <div className="preview-header">
+                <div>
+                  <h1>Your Gift Cards</h1>
+                  <p>Scratch each artwork to reveal your surprise</p>
+                </div>
+                <div className="header-buttons">
+                  {!isRecipientMode && (
+                    <>
+                      <button className="share-btn" onClick={handleOpenShare}>
+                        Share
+                      </button>
+                      <button className="edit-btn" onClick={() => {
+                        // Clear all saved data and restart
+                        localStorage.removeItem('lnyGiftSession');
+                        localStorage.removeItem('lnyRevealedCards');
+                        setRevealedCards({});
+                        setSession({
+                          startDate: '',
+                          cards: {
+                            1: { template: 'template1', title: 'I LOVE YOU', subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', photo: null, emojis: [], completed: false },
+                            2: { template: 'template2', title: 'THIS IS MY PLAY LIST !', subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', photo: 'PLAYLIST.jpg', emojis: [], completed: false },
+                            3: { template: 'template3', title: 'The Lucky Charm', subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', photo: null, emojis: [], completed: false },
+                            4: { template: 'template4', title: 'A LITTLE GIFT FROM ME', subtitle: 'SEND THEM A DIGITAL GIFT CARD !', photo: null, emojis: [], completed: false },
+                            5: { template: 'template1', title: 'A LITTLE MESSAGE FROM ME', subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', photo: null, emojis: [], completed: false },
+                            6: { template: 'template2', title: 'THIS IS MY TREAT', subtitle: 'A LITTLE DATE WITH ME SAVED!', photo: null, emojis: [], completed: false },
+                          }
+                        });
+                        setMode('editor');
+                      }}>
+                        Restart
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="artwork-grid">
+                {DAYS_CONFIG.map(day => {
+                  const isLocked = isCardLocked(day.id, session.startDate);
+                  const isRevealed = revealedCards[day.id];
+
+                  return (
+                    <div
+                      key={day.id}
+                      className={`artwork-card ${isRevealed ? 'revealed' : ''}`}
+                      onClick={() => handleArtworkClick(day.id)}
+                    >
+                      <img src={day.artwork} alt={`Day ${day.id}`} className="artwork-image" />
+                      <span className="artwork-day-label">Day {day.id}</span>
+                      
+                      {isLocked ? (
+                        <div className="lock-overlay">
+                          <span className="lock-icon">🔒</span>
+                          <span className="lock-text">
+                            Unlocks {formatDate(getUnlockDate(day.id, session.startDate))}
+                          </span>
+                        </div>
+                      ) : !isRevealed ? (
+                        <div className="artwork-overlay">
+                          <span className="scratch-hint">Scratch Me!</span>
+                        </div>
+                      ) : (
+                        <div className="artwork-overlay">
+                          <span className="scratch-hint">Tap to View</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Share Modal */}
+            {showShareModal && (
+              <div className="modal-overlay" onClick={() => setShowShareModal(false)}>
+                <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+                  <button className="modal-close" onClick={() => setShowShareModal(false)}>×</button>
+                  <h2>Share Your Gift</h2>
+                  <p>Send this link to your friend so they can scratch and reveal your surprises!</p>
+                  <div className="share-url-box">{shareURL}</div>
+                  <button 
+                    className={`copy-btn ${copied ? 'copied' : ''}`} 
+                    onClick={handleCopyLink}
+                  >
+                    {copied ? 'Copied!' : 'Copy Link'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Scratch Overlay */}
+            {scratchingDay && (
+              <ScratchOverlay
+                day={scratchingDay}
+                cardContent={session.cards[scratchingDay]}
+                onComplete={() => handleScratchComplete(scratchingDay)}
+                onClose={() => setScratchingDay(null)}
+              />
+            )}
+
+            {/* View Revealed Card */}
+            {viewingDay && (
+              <div className="reveal-complete" onClick={() => setViewingDay(null)}>
+                <CardPreview
+                  content={session.cards[viewingDay]}
+                  template={TEMPLATES.find(t => t.id === session.cards[viewingDay].template)}
+                  readOnly
+                />
+                <span className="hint">Tap anywhere to close</span>
+              </div>
+            )}
+
+            {/* Happy New Year Modal */}
+            {showHappyNewYear && (
+              <div 
+                className={`modal-overlay happy-new-year-overlay ${isClosing ? 'closing' : ''}`}
+                onClick={handleCloseHappyNewYear}
+                style={{ cursor: 'pointer' }}
+              >
+                <div 
+                  className="happy-new-year-modal" 
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h2>Happy New Year!</h2>
+                  <p>You've revealed all the cards!</p>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginTop: '1rem' }}>
+                    Click backdrop or press Escape to close
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+
+      // ========== EDITOR MODE ==========
+      return (
+        <div className="app-container">
+          <aside className="left-panel">
+            <div className="panel-header">
+              {editorView === 'edit' && (
+                <button className="back-btn" onClick={handleBackToList}>←</button>
+              )}
+              <h1>{editorView === 'edit' ? DAYS_CONFIG.find(d => d.id === editingDay)?.emoji : 'EDIT YOUR CARDS!'}</h1>
+            </div>
+
+            <div className="panel-content">
+              {editorView === 'list' ? (
+                <>
+                  <div className="day-list">
+                    {DAYS_CONFIG.map(day => (
+                      <div
+                        key={day.id}
+                        className={`day-item ${session.cards[day.id].completed ? 'completed' : ''}`}
+                        onClick={() => handleSelectDay(day.id)}
+                      >
+                        <div className="day-content">
+                          <div className="day-label">CARD {day.id}</div>
+                          <div className="status">TAP TO EDIT</div>
+                        </div>
+                        <span className="arrow"></span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="edit-section">
+                    <h3>BACKGROUND</h3>
+                    <div className="template-grid">
+                      {TEMPLATES.map(template => (
+                        <button
+                          key={template.id}
+                          className={`template-btn ${currentCard?.template === template.id ? 'active' : ''}`}
+                          onClick={() => updateCard('template', template.id)}
+                        >
+                          <img src={template.image} alt={template.label} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="edit-section">
+                    <h3>Text</h3>
+                    <div className="input-group">
+                      <label>Title</label>
+                      <input
+                        type="text"
+                        value={currentCard?.title || ''}
+                        onChange={(e) => updateCard('title', e.target.value)}
+                        placeholder="Enter title..."
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Message</label>
+                      <textarea
+                        value={currentCard?.subtitle || ''}
+                        onChange={(e) => updateCard('subtitle', e.target.value)}
+                        placeholder="Add a message..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="edit-section">
+                    <h3>PHOTO</h3>
+                    <div className="photo-options">
+                      <label className="photo-upload-area">
+                        <div className="upload-text">
+                          {currentCard?.photo ? 'CHANGE' : 'UPLOAD'}
+                        </div>
+                        <input type="file" accept="image/*" onChange={handlePhotoUpload} />
+                      </label>
+                      <div className="photo-camera-area" onClick={handleCameraClick}>
+                        <div className="camera-text">
+                          {currentCard?.photo ? 'RETAKE' : 'CAMERA'}
+                        </div>
+                      </div>
+                    </div>
+                    {currentCard?.photo && (
+                      <div className="photo-preview-box">
+                        <img src={currentCard.photo} alt="Preview" />
+                        <button className="remove-btn" onClick={() => updateCard('photo', null)}>✕</button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="edit-section">
+                    <h3>Stickers</h3>
+                    <div className="emoji-grid">
+                      {STICKERS.map((sticker, i) => (
+                        <button key={i} className="emoji-btn" onClick={() => addSticker(sticker)}>
+                          <img src={sticker} alt={`Sticker ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="panel-footer">
+              {editorView === 'list' ? (
+                <button className="btn-primary btn-gold" onClick={handleFinish}>
+                  PREVIEW AND SEND
+                </button>
+              ) : (
+                <button className="btn-primary" onClick={handleSaveCard}>
+                  Save Day {editingDay}
+                </button>
+              )}
+            </div>
+          </aside>
+
+          <main className="right-panel">
+            {editorView !== 'edit' && (
+              <>
+                <div className="right-panel-text top-right">
+                  A Little Sparkle for Someone Special
+                </div>
+                <div className="right-panel-text bottom-left">
+                  From My Heart<br />to Your Screen.
+                </div>
+              </>
+            )}
+            {editorView === 'edit' && currentCard && (
+              <CardPreview
+                content={currentCard}
+                template={currentTemplate}
+                onStickerMove={updateStickerPos}
+                onStickerResize={updateStickerSize}
+                onStickerRotate={updateStickerRotation}
+                onStickerDelete={deleteSticker}
+              />
+            )}
+          </main>
+
+          {/* Date Picker Modal */}
+          {showDateModal && (
+            <div className="modal-overlay" onClick={() => setShowDateModal(false)}>
+              <div className="date-modal" onClick={(e) => e.stopPropagation()}>
+                <button className="modal-close" onClick={() => setShowDateModal(false)}>×</button>
+                <h2>Set Start Date</h2>
+                <div className="date-input-wrapper">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={tempStartDate}
+                    onChange={(e) => setTempStartDate(e.target.value)}
+                  />
+                </div>
+                {tempStartDate && (
+                  <div className="date-preview">
+                    <strong>Card 1</strong> will unlock on {getUnlockPreview(1)}.<br />
+                    <strong>Card 2</strong> will unlock on {getUnlockPreview(2)}.
+                  </div>
+                )}
+                <button
+                  className="confirm-date-btn"
+                  onClick={handleConfirmDate}
+                  disabled={!tempStartDate}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Camera Viewfinder */}
+          {showCameraView && (
+            <div className="camera-viewfinder">
+              <div className="camera-video-container">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              <div className="camera-controls">
+                <button className="camera-close-btn" onClick={handleCloseCamera}>
+                  CLOSE
+                </button>
+                <button className="camera-capture-btn" onClick={handleCapturePhoto}>
+                  <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: 'white' }}></div>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ========== SCRATCH OVERLAY ==========
+    function ScratchOverlay({ day, cardContent, onComplete, onClose }) {
+      const canvasRef = useRef(null);
+      const [progress, setProgress] = useState(0);
+      const [isScratching, setIsScratching] = useState(false);
+      const [artworkLoaded, setArtworkLoaded] = useState(false);
+      const [cardVisible, setCardVisible] = useState(false);
+
+      const dayConfig = DAYS_CONFIG.find(d => d.id === day);
+      const template = TEMPLATES.find(t => t.id === cardContent.template);
+
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          // Use artwork's natural size, but limit max dimensions
+          const maxWidth = Math.min(img.width, 400);
+          const maxHeight = Math.min(img.height, 550);
+          const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+          
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          
+          // Draw full artwork without cropping
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          setArtworkLoaded(true);
+        };
+        img.src = dayConfig.artwork;
+      }, [day]);
+
+      const scratch = (x, y) => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.beginPath();
+        ctx.arc(x, y, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let transparent = 0;
+        for (let i = 3; i < imageData.data.length; i += 4) {
+          if (imageData.data[i] === 0) transparent++;
+        }
+        const total = imageData.data.length / 4;
+        const newProgress = Math.round((transparent / total) * 100);
+        setProgress(newProgress);
+        
+        // Show card at 50%
+        if (newProgress >= 50 && !cardVisible) {
+          setCardVisible(true);
+        }
+        
+        // Complete at 80%
+        if (newProgress >= 80) {
+          createGlitter();
+          setTimeout(onComplete, 500);
+        }
+      };
+
+      const handleMouseMove = (e) => {
+        if (!isScratching || !artworkLoaded) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        scratch(x, y);
+      };
+
+      const handleTouchMove = (e) => {
+        if (!artworkLoaded) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        scratch(x, y);
+      };
+
+      const createGlitter = () => {
+        const container = document.createElement('div');
+        container.className = 'glitter-container';
+        document.body.appendChild(container);
+        
+        for (let i = 0; i < 30; i++) {
+          const glitter = document.createElement('div');
+          glitter.className = 'glitter';
+          glitter.style.left = Math.random() * 100 + '%';
+          glitter.style.top = Math.random() * 50 + '%';
+          glitter.style.animationDelay = Math.random() * 0.5 + 's';
+          glitter.style.background = `hsl(${40 + Math.random() * 20}, 80%, ${60 + Math.random() * 20}%)`;
+          container.appendChild(glitter);
+        }
+        
+        setTimeout(() => container.remove(), 2500);
+      };
+
+      return (
+        <div className="scratch-overlay">
+          <button className="close-scratch" onClick={onClose}>✕</button>
+          
+          <div className={`scratch-underlay ${cardVisible ? 'visible' : ''}`}>
+          <CardPreview content={cardContent} template={template} readOnly />
+        </div>
+        
+        <div className="scratch-container">
+            <canvas
+              ref={canvasRef}
+              className="scratch-canvas"
+              onMouseDown={() => setIsScratching(true)}
+              onMouseUp={() => setIsScratching(false)}
+              onMouseLeave={() => setIsScratching(false)}
+              onMouseMove={handleMouseMove}
+              onTouchStart={() => setIsScratching(true)}
+              onTouchEnd={() => setIsScratching(false)}
+              onTouchMove={handleTouchMove}
+            />
+            
+            <div className="scratch-progress">
+              {progress < 50 
+                ? `Keep scratching: ${progress}%` 
+                : progress < 80 
+                  ? `Almost there: ${progress}%` 
+                  : 'Revealed!'}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========== CARD PREVIEW ==========
+    function CardPreview({ content, template, onStickerMove, onStickerResize, onStickerRotate, onStickerDelete, readOnly }) {
+      if (!content || !template) return null;
+
+      return (
+        <div 
+          className={`card-preview ${template.pattern}`}
+          style={{ 
+            backgroundImage: template.image ? `url(${template.image})` : 'none',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundColor: template.bgColor
+          }}
+        >
+          <div className="card-content">
+            <h2 className="card-title">{content.title}</h2>
+
+            <div className="card-photo-area">
+              {content.photo ? (
+                <div className="card-photo-frame">
+                  <img src={content.photo} alt="Your photo" />
+                </div>
+              ) : (
+                <div className="card-photo-placeholder">
+                  <span className="text">Upload photo</span>
+                </div>
+              )}
+            </div>
+
+            {content.subtitle && (
+              <p className="card-subtitle">{content.subtitle}</p>
+            )}
+
+            {content.emojis?.map(sticker => (
+              <DraggableSticker
+                key={sticker.id}
+                sticker={sticker}
+                onMove={readOnly ? () => {} : (x, y) => onStickerMove(sticker.id, x, y)}
+                onResize={readOnly ? () => {} : (w, h) => onStickerResize(sticker.id, w, h)}
+                onRotate={readOnly ? () => {} : (rotation) => onStickerRotate(sticker.id, rotation)}
+                onDelete={readOnly ? () => {} : () => onStickerDelete(sticker.id)}
+                readOnly={readOnly}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // ========== DRAGGABLE STICKER ==========
+    function DraggableSticker({ sticker, onMove, onResize, onRotate, onDelete, readOnly }) {
+      const [isDragging, setIsDragging] = useState(false);
+      const [isResizing, setIsResizing] = useState(false);
+      const [isRotating, setIsRotating] = useState(false);
+      const [position, setPosition] = useState({ x: sticker.x || 0, y: sticker.y || 0 });
+      const [size, setSize] = useState({ 
+        width: sticker.width || 60, 
+        height: sticker.height || 60 
+      });
+      const [rotation, setRotation] = useState(sticker.rotation || 0);
+      const elementRef = useRef(null);
+      const dragOffsetRef = useRef({ x: 0, y: 0 });
+      const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+      const rotateStartRef = useRef({ x: 0, y: 0, angle: 0, centerX: 0, centerY: 0 });
+
+      const handleMouseDown = (e) => {
+        if (readOnly) return;
+        if (e.target.classList.contains('delete-x')) return;
+        if (e.target.classList.contains('resize-handle') || e.target.closest('.resize-handle')) {
+          e.preventDefault();
+          setIsResizing(true);
+          const rect = elementRef.current.getBoundingClientRect();
+          resizeStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            width: rect.width,
+            height: rect.height,
+            startX: rect.left,
+            startY: rect.top
+          };
+          return;
+        }
+        if (e.target.classList.contains('rotate-handle') || e.target.closest('.rotate-handle')) {
+          e.preventDefault();
+          setIsRotating(true);
+          const rect = elementRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          rotateStartRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            angle: rotation,
+            centerX: centerX,
+            centerY: centerY
+          };
+          return;
+        }
+        e.preventDefault();
+        setIsDragging(true);
+        const rect = elementRef.current.getBoundingClientRect();
+        dragOffsetRef.current = { 
+          x: e.clientX - rect.left, 
+          y: e.clientY - rect.top 
+        };
+      };
+
+      const handleMouseMove = useCallback((e) => {
+        if (isRotating) {
+          const rect = elementRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          const startDx = rotateStartRef.current.x - rotateStartRef.current.centerX;
+          const startDy = rotateStartRef.current.y - rotateStartRef.current.centerY;
+          const currentDx = e.clientX - centerX;
+          const currentDy = e.clientY - centerY;
+          
+          const startAngle = Math.atan2(startDy, startDx) * (180 / Math.PI);
+          const currentAngle = Math.atan2(currentDy, currentDx) * (180 / Math.PI);
+          let deltaAngle = currentAngle - startAngle;
+          
+          // Handle angle wrapping (crossing 180/-180 boundary) for smooth rotation
+          if (deltaAngle > 180) {
+            deltaAngle -= 360;
+          } else if (deltaAngle < -180) {
+            deltaAngle += 360;
+          }
+          
+          // Apply rotation sensitivity (0.25 = 25% speed, much slower rotation)
+          const rotationSensitivity = 0.25;
+          deltaAngle *= rotationSensitivity;
+          
+          // Calculate new rotation and ensure smooth transition through all angles
+          let newRotation = rotateStartRef.current.angle + deltaAngle;
+          
+          // Normalize to 0-360 range, preserving smooth rotation through 181-270 degrees
+          newRotation = ((newRotation % 360) + 360) % 360;
+          
+          setRotation(newRotation);
+        } else if (isResizing) {
+          const parent = elementRef.current.parentElement;
+          const parentRect = parent.getBoundingClientRect();
+          const deltaX = e.clientX - resizeStartRef.current.x;
+          const deltaY = e.clientY - resizeStartRef.current.y;
+          
+          let newWidth = resizeStartRef.current.width + deltaX;
+          let newHeight = resizeStartRef.current.height + deltaY;
+          
+          // Min size
+          newWidth = Math.max(30, newWidth);
+          newHeight = Math.max(30, newHeight);
+          
+          // Max size (80% of card)
+          const maxWidth = parentRect.width * 0.8;
+          const maxHeight = parentRect.height * 0.8;
+          newWidth = Math.min(newWidth, maxWidth);
+          newHeight = Math.min(newHeight, maxHeight);
+          
+          setSize({ width: newWidth, height: newHeight });
+        } else if (isDragging) {
+          const parent = elementRef.current.parentElement;
+          const parentRect = parent.getBoundingClientRect();
+          let newX = e.clientX - parentRect.left - dragOffsetRef.current.x;
+          let newY = e.clientY - parentRect.top - dragOffsetRef.current.y;
+          
+          // Allow stickers to go outside the frame (will be clipped by overflow: hidden)
+          setPosition({ x: newX, y: newY });
+        }
+      }, [isDragging, isResizing, isRotating, size.width, size.height]);
+
+      const handleMouseUp = useCallback(() => {
+        if (isDragging) {
+          setIsDragging(false);
+          onMove(position.x, position.y);
+        }
+        if (isResizing) {
+          setIsResizing(false);
+          onResize(size.width, size.height);
+        }
+        if (isRotating) {
+          setIsRotating(false);
+          onRotate(rotation);
+        }
+      }, [isDragging, isResizing, isRotating, position, size, rotation, onMove, onResize, onRotate]);
+
+      useEffect(() => {
+        if (isDragging || isResizing || isRotating) {
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleMouseUp);
+          return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+          };
+        }
+      }, [isDragging, isResizing, isRotating, handleMouseMove, handleMouseUp]);
+
+      return (
+        <div
+          ref={elementRef}
+          className={`card-sticker ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isRotating ? 'rotating' : ''}`}
+          style={{ 
+            left: position.x, 
+            top: position.y,
+            width: size.width,
+            height: size.height,
+            transform: `rotate(${rotation}deg)`,
+            transformOrigin: 'center center'
+          }}
+          onMouseDown={handleMouseDown}
+        >
+          {sticker.image ? (
+            <img src={sticker.image} alt="Sticker" />
+          ) : sticker.emoji ? (
+            <span style={{ fontSize: size.width * 0.8 }}>{sticker.emoji}</span>
+          ) : null}
+          {!readOnly && (
+            <>
+              <span className="delete-x" onClick={onDelete}>✕</span>
+              <div className="resize-handle"></div>
+              <div 
+                className="rotate-handle"
+                style={{ transform: `translateX(-50%) rotate(${-rotation}deg)` }}
+              ></div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

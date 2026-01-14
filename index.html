@@ -1601,9 +1601,24 @@
       padding: 2rem;
       width: 90%;
       max-width: 450px;
+      max-height: 85vh;
+      overflow-y: auto;
       box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
       animation: slideUp 0.3s ease;
       position: relative;
+    }
+
+    @media (max-width: 768px) {
+      .share-modal {
+        padding: 1.5rem;
+        max-height: 90vh;
+      }
+      .share-link-section {
+        margin-bottom: 1.5rem;
+      }
+      .share-link-section h3 {
+        font-size: 0.9rem;
+      }
     }
 
     @keyframes slideUp {
@@ -1782,6 +1797,28 @@
       color: var(--text-light);
       text-align: center;
       margin-bottom: 1.5rem;
+    }
+
+    .share-link-section {
+      margin-bottom: 1rem;
+    }
+
+    .share-link-section h3 {
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .link-description {
+      font-size: 0.8rem !important;
+      color: var(--text-light) !important;
+      text-align: left !important;
+      margin-bottom: 1rem !important;
     }
 
     .share-url-box {
@@ -2290,15 +2327,39 @@
       return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
+    // Generate SHARE link (for recipients to scratch - read-only)
     function generateShareURL(giftData) {
       const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(giftData))));
       const baseUrl = window.location.origin + window.location.pathname;
       return `${baseUrl}?gift=${encoded}`;
     }
 
+    // Generate EDIT link (for creator to continue editing)
+    function generateEditURL(sessionData) {
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(sessionData))));
+      const baseUrl = window.location.origin + window.location.pathname;
+      return `${baseUrl}?edit=${encoded}`;
+    }
+
+    // Parse URL parameters - check for both 'gift' (recipient) and 'edit' (creator)
     function parseGiftFromURL() {
       const params = new URLSearchParams(window.location.search);
       const giftParam = params.get('gift');
+      const editParam = params.get('edit');
+      
+      // If 'edit' param exists, load session for editing
+      if (editParam) {
+        try {
+          const sessionData = JSON.parse(decodeURIComponent(escape(atob(editParam))));
+          // Store in localStorage for editing
+          localStorage.setItem('lnyGiftSession', JSON.stringify(sessionData));
+          return null; // Return null so it goes to editor mode
+        } catch (e) {
+          console.error('Failed to parse edit data');
+        }
+      }
+      
+      // If 'gift' param exists, load for recipient (read-only)
       if (giftParam) {
         try {
           return JSON.parse(decodeURIComponent(escape(atob(giftParam))));
@@ -2306,6 +2367,7 @@
           console.error('Failed to parse gift data');
         }
       }
+      
       return null;
     }
 
@@ -2322,7 +2384,9 @@
       // Share modal
       const [showShareModal, setShowShareModal] = useState(false);
       const [shareURL, setShareURL] = useState('');
-      const [copied, setCopied] = useState(false);
+      const [editURL, setEditURL] = useState('');
+      const [copied, setCopied] = useState('');
+      const [copiedType, setCopiedType] = useState(''); // 'share' or 'edit'
       
       // Date picker modal
       const [showDateModal, setShowDateModal] = useState(false);
@@ -2435,8 +2499,12 @@
         
         setSession(updatedSession);
         localStorage.setItem('lnyGiftSession', JSON.stringify(updatedSession));
-        const url = generateShareURL(updatedSession);
-        setShareURL(url);
+        
+        // Generate both links
+        const shareLink = generateShareURL(updatedSession);
+        const editLink = generateEditURL(updatedSession);
+        setShareURL(shareLink);
+        setEditURL(editLink);
         setShowDateModal(false);
         setMode('preview');
       };
@@ -2452,16 +2520,24 @@
 
       // Open share modal
       const handleOpenShare = () => {
-        const url = generateShareURL(session);
-        setShareURL(url);
+        // Generate both links
+        const shareLink = generateShareURL(session);
+        const editLink = generateEditURL(session);
+        setShareURL(shareLink);
+        setEditURL(editLink);
         setShowShareModal(true);
       };
 
-      // Copy link
-      const handleCopyLink = () => {
-        navigator.clipboard.writeText(shareURL);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+      // Copy link (either share or edit)
+      const handleCopyLink = (type) => {
+        const urlToCopy = type === 'edit' ? editURL : shareURL;
+        navigator.clipboard.writeText(urlToCopy);
+        setCopiedType(type);
+        setCopied(urlToCopy);
+        setTimeout(() => {
+          setCopied('');
+          setCopiedType('');
+        }, 2000);
       };
 
       // Scratch card click
@@ -2793,14 +2869,32 @@
                 <div className="share-modal" onClick={(e) => e.stopPropagation()}>
                   <button className="modal-close" onClick={() => setShowShareModal(false)}>×</button>
                   <h2>Share Your Gift</h2>
-                  <p>Send this link to your friend so they can scratch and reveal your surprises!</p>
-                  <div className="share-url-box">{shareURL}</div>
-                  <button 
-                    className={`copy-btn ${copied ? 'copied' : ''}`} 
-                    onClick={handleCopyLink}
-                  >
-                    {copied ? 'Copied!' : 'Copy Link'}
-                  </button>
+                  
+                  {/* Share Link (for recipients) */}
+                  <div className="share-link-section">
+                    <h3>📤 Share Link (For Your Friends)</h3>
+                    <p className="link-description">Send this link to your friend so they can scratch and reveal your surprises!</p>
+                    <div className="share-url-box">{shareURL}</div>
+                    <button 
+                      className={`copy-btn ${copiedType === 'share' ? 'copied' : ''}`} 
+                      onClick={() => handleCopyLink('share')}
+                    >
+                      {copiedType === 'share' ? '✓ Copied!' : 'Copy Share Link'}
+                    </button>
+                  </div>
+
+                  {/* Edit Link (for creator) */}
+                  <div className="share-link-section" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                    <h3>✏️ Edit Link (For You)</h3>
+                    <p className="link-description">Save this link to continue editing your cards later!</p>
+                    <div className="share-url-box">{editURL}</div>
+                    <button 
+                      className={`copy-btn ${copiedType === 'edit' ? 'copied' : ''}`} 
+                      onClick={() => handleCopyLink('edit')}
+                    >
+                      {copiedType === 'edit' ? '✓ Copied!' : 'Copy Edit Link'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

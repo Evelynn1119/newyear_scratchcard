@@ -102,6 +102,9 @@
     .mobile-panel-backdrop {
       display: none;
     }
+    .mobile-save-btn {
+      display: none;
+    }
 
     /* ========== MOBILE LAYOUT ========== */
     @media (max-width: 768px) {
@@ -127,6 +130,9 @@
         transform: translateX(-100%);
         transition: transform 0.3s ease;
         overflow-y: auto;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
 
       .left-panel.mobile-open {
@@ -153,15 +159,18 @@
         position: fixed;
         left: 12px;
         top: 12px;
-        width: 44px;
-        height: 44px;
+        padding: 10px 16px;
         background: var(--main-red);
         border: none;
-        border-radius: 50%;
+        border-radius: 2rem;
         color: white;
-        font-size: 20px;
+        font-family: 'Quicksand', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         z-index: 901;
         cursor: pointer;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -169,6 +178,31 @@
       }
 
       .mobile-toggle-btn:active {
+        transform: scale(0.95);
+      }
+
+      /* Mobile save button on card preview */
+      .mobile-save-btn {
+        display: block;
+        position: fixed;
+        right: 12px;
+        top: 12px;
+        padding: 10px 20px;
+        background: var(--main-red);
+        border: none;
+        border-radius: 2rem;
+        color: white;
+        font-family: 'Quicksand', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        z-index: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-save-btn:active {
         transform: scale(0.95);
       }
 
@@ -2373,7 +2407,14 @@
       const handleSaveCard = () => {
         updateCard('completed', true);
         localStorage.setItem('lnyGiftSession', JSON.stringify(session));
-        handleBackToList();
+        
+        // Go to next card if available, otherwise back to list
+        const nextDay = editingDay + 1;
+        if (nextDay <= 6) {
+          setEditingDay(nextDay);
+        } else {
+          handleBackToList();
+        }
         setMobilePanelOpen(false); // Close mobile panel after saving
       };
 
@@ -2814,8 +2855,15 @@
             className="mobile-toggle-btn"
             onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
           >
-            {mobilePanelOpen ? '✕' : '☰'}
+            {mobilePanelOpen ? '✕ CLOSE' : '✎ EDIT HERE'}
           </button>
+
+          {/* Mobile save button - only show in edit mode */}
+          {editorView === 'edit' && !mobilePanelOpen && (
+            <button className="mobile-save-btn" onClick={handleSaveCard}>
+              SAVE →
+            </button>
+          )}
 
           {/* Mobile backdrop */}
           <div 

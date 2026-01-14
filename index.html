@@ -98,34 +98,96 @@
     /* ========== MOBILE LAYOUT ========== */
     @media (max-width: 768px) {
       .app-container {
-        flex-direction: column;
-        min-height: auto;
-        overflow-y: auto;
+        flex-direction: row;
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
       }
 
       .left-panel {
-        width: 100%;
-        min-width: 100%;
-        max-height: none;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 85%;
+        max-width: 340px;
+        min-width: auto;
+        height: 100vh;
+        max-height: 100vh;
         border-right: none;
-        border-bottom: 1px solid var(--main-pink);
-        box-shadow: 0 4px 20px rgba(254, 213, 212, 0.2);
+        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+        z-index: 900;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        overflow-y: auto;
+      }
+
+      .left-panel.mobile-open {
+        transform: translateX(0);
+      }
+
+      .mobile-panel-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 899;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .mobile-panel-backdrop.visible {
+        display: block;
+        opacity: 1;
+      }
+
+      .mobile-toggle-btn {
+        display: flex;
+        position: fixed;
+        left: 12px;
+        top: 12px;
+        width: 44px;
+        height: 44px;
+        background: var(--main-red);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        font-size: 20px;
+        align-items: center;
+        justify-content: center;
+        z-index: 901;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-toggle-btn:active {
+        transform: scale(0.95);
       }
 
       .panel-content {
-        max-height: 50vh;
+        max-height: none;
         overflow-y: auto;
+        padding-bottom: 100px;
       }
 
       .right-panel {
         width: 100%;
-        min-height: 400px;
+        min-height: 100vh;
         padding: 1.5rem;
+        padding-top: 70px;
       }
 
       .right-panel-text {
         display: none; /* Hide decorative text on mobile */
       }
+    }
+
+    /* Hide mobile toggle on desktop */
+    .mobile-toggle-btn {
+      display: none;
+    }
+    .mobile-panel-backdrop {
+      display: none;
     }
 
     .panel-header {
@@ -871,6 +933,20 @@
     .card-photo-draggable:hover .rotate-handle { opacity: 1; }
     .card-photo-draggable.rotating .rotate-handle { cursor: grabbing; opacity: 1; }
 
+    /* Mobile: Always show handles for touch interaction */
+    @media (max-width: 768px) {
+      .card-photo-draggable .resize-handle,
+      .card-photo-draggable .rotate-handle {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+      }
+      .card-photo-draggable .resize-handle { bottom: -12px; right: -12px; }
+      .card-photo-draggable .rotate-handle { bottom: -32px; }
+      .card-photo-draggable .resize-handle::before { font-size: 14px; }
+      .card-photo-draggable .rotate-handle::before { font-size: 16px; }
+    }
+
     /* Layer 4: Content Overlay (title, subtitle, stickers) */
     .card-content-overlay {
       position: absolute;
@@ -1159,6 +1235,20 @@
 
     .card-sticker:hover .rotate-handle { opacity: 1; }
     .card-sticker.rotating .rotate-handle { cursor: grabbing; opacity: 1; }
+
+    /* Mobile: Always show handles for touch interaction */
+    @media (max-width: 768px) {
+      .card-sticker .resize-handle,
+      .card-sticker .rotate-handle {
+        opacity: 1;
+        width: 28px;
+        height: 28px;
+      }
+      .card-sticker .resize-handle { bottom: -12px; right: -12px; }
+      .card-sticker .rotate-handle { bottom: -32px; }
+      .card-sticker .resize-handle::before { font-size: 14px; }
+      .card-sticker .rotate-handle::before { font-size: 16px; }
+    }
 
     .empty-preview {
       text-align: center;
@@ -2180,6 +2270,9 @@
       const [cameraStream, setCameraStream] = useState(null);
       const videoRef = useRef(null);
 
+      // Mobile panel state
+      const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+
       // Session data
       const [session, setSession] = useState(() => {
         if (isRecipientMode) return giftData;
@@ -2252,6 +2345,7 @@
         updateCard('completed', true);
         localStorage.setItem('lnyGiftSession', JSON.stringify(session));
         handleBackToList();
+        setMobilePanelOpen(false); // Close mobile panel after saving
       };
 
       // FINISH & GENERATE
@@ -2686,7 +2780,21 @@
       // ========== EDITOR MODE ==========
       return (
         <div className="app-container">
-          <aside className="left-panel">
+          {/* Mobile toggle button */}
+          <button 
+            className="mobile-toggle-btn"
+            onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
+          >
+            {mobilePanelOpen ? '✕' : '☰'}
+          </button>
+
+          {/* Mobile backdrop */}
+          <div 
+            className={`mobile-panel-backdrop ${mobilePanelOpen ? 'visible' : ''}`}
+            onClick={() => setMobilePanelOpen(false)}
+          />
+
+          <aside className={`left-panel ${mobilePanelOpen ? 'mobile-open' : ''}`}>
             <div className="panel-header">
               {editorView === 'edit' && (
                 <button className="back-btn" onClick={handleBackToList}>←</button>
@@ -3191,39 +3299,55 @@
       const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
       const rotateStartRef = useRef({ x: 0, y: 0, angle: 0, centerX: 0, centerY: 0 });
 
-      const handleMouseDown = (e) => {
+      // Get clientX/Y from mouse or touch event
+      const getClientCoords = (e) => {
+        if (e.touches && e.touches.length > 0) {
+          return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+        }
+        return { clientX: e.clientX, clientY: e.clientY };
+      };
+
+      const handleStart = (e, isTouch = false) => {
         if (readOnly) return;
-        if (e.target.classList.contains('resize-handle') || e.target.closest('.resize-handle')) {
-          e.preventDefault();
+        const target = e.target;
+        const { clientX, clientY } = getClientCoords(e);
+        
+        if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
+          if (!isTouch) e.preventDefault();
           setIsResizing(true);
           const rect = elementRef.current.getBoundingClientRect();
-          resizeStartRef.current = { x: e.clientX, y: e.clientY, width: rect.width, height: rect.height };
+          resizeStartRef.current = { x: clientX, y: clientY, width: rect.width, height: rect.height };
           return;
         }
-        if (e.target.classList.contains('rotate-handle') || e.target.closest('.rotate-handle')) {
-          e.preventDefault();
+        if (target.classList.contains('rotate-handle') || target.closest('.rotate-handle')) {
+          if (!isTouch) e.preventDefault();
           setIsRotating(true);
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const centerY = rect.top + rect.height / 2;
-          rotateStartRef.current = { x: e.clientX, y: e.clientY, angle: rotation, centerX, centerY };
+          rotateStartRef.current = { x: clientX, y: clientY, angle: rotation, centerX, centerY };
           return;
         }
-        e.preventDefault();
+        if (!isTouch) e.preventDefault();
         setIsDragging(true);
         const rect = elementRef.current.getBoundingClientRect();
-        dragOffsetRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        dragOffsetRef.current = { x: clientX - rect.left, y: clientY - rect.top };
       };
 
-      const handleMouseMove = useCallback((e) => {
+      const handleMouseDown = (e) => handleStart(e, false);
+      const handleTouchStart = (e) => handleStart(e, true);
+
+      const handleMove = useCallback((e) => {
+        const { clientX, clientY } = getClientCoords(e);
+        
         if (isRotating) {
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const centerY = rect.top + rect.height / 2;
           const startDx = rotateStartRef.current.x - rotateStartRef.current.centerX;
           const startDy = rotateStartRef.current.y - rotateStartRef.current.centerY;
-          const currentDx = e.clientX - centerX;
-          const currentDy = e.clientY - centerY;
+          const currentDx = clientX - centerX;
+          const currentDy = clientY - centerY;
           const startAngle = Math.atan2(startDy, startDx) * (180 / Math.PI);
           const currentAngle = Math.atan2(currentDy, currentDx) * (180 / Math.PI);
           let deltaAngle = currentAngle - startAngle;
@@ -3235,8 +3359,8 @@
           newRotation = ((newRotation % 360) + 360) % 360;
           setRotation(newRotation);
         } else if (isResizing) {
-          const deltaX = e.clientX - resizeStartRef.current.x;
-          const deltaY = e.clientY - resizeStartRef.current.y;
+          const deltaX = clientX - resizeStartRef.current.x;
+          const deltaY = clientY - resizeStartRef.current.y;
           let newWidth = Math.max(50, resizeStartRef.current.width + deltaX);
           let newHeight = Math.max(50, resizeStartRef.current.height + deltaY);
           newWidth = Math.min(newWidth, 280);
@@ -3245,13 +3369,13 @@
         } else if (isDragging) {
           const parent = elementRef.current.parentElement;
           const parentRect = parent.getBoundingClientRect();
-          let newX = e.clientX - parentRect.left - dragOffsetRef.current.x;
-          let newY = e.clientY - parentRect.top - dragOffsetRef.current.y;
+          let newX = clientX - parentRect.left - dragOffsetRef.current.x;
+          let newY = clientY - parentRect.top - dragOffsetRef.current.y;
           setPosition({ x: newX, y: newY });
         }
       }, [isDragging, isResizing, isRotating]);
 
-      const handleMouseUp = useCallback(() => {
+      const handleEnd = useCallback(() => {
         if (isDragging) {
           setIsDragging(false);
           onTransform({ x: position.x, y: position.y });
@@ -3268,14 +3392,21 @@
 
       useEffect(() => {
         if (isDragging || isResizing || isRotating) {
+          const handleMouseMove = (e) => handleMove(e);
+          const handleTouchMove = (e) => { e.preventDefault(); handleMove(e); };
+          
           window.addEventListener('mousemove', handleMouseMove);
-          window.addEventListener('mouseup', handleMouseUp);
+          window.addEventListener('mouseup', handleEnd);
+          window.addEventListener('touchmove', handleTouchMove, { passive: false });
+          window.addEventListener('touchend', handleEnd);
           return () => {
             window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleEnd);
           };
         }
-      }, [isDragging, isResizing, isRotating, handleMouseMove, handleMouseUp]);
+      }, [isDragging, isResizing, isRotating, handleMove, handleEnd]);
 
       return (
         <div
@@ -3287,10 +3418,12 @@
             width: size.width,
             height: size.height,
             transform: `rotate(${rotation}deg)`,
+            touchAction: 'none',
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
-          <img src={photo} alt="Your photo" />
+          <img src={photo} alt="Your photo" draggable={false} />
           {!readOnly && (
             <>
               <div className="resize-handle"></div>
@@ -3317,16 +3450,27 @@
       const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
       const rotateStartRef = useRef({ x: 0, y: 0, angle: 0, centerX: 0, centerY: 0 });
 
-      const handleMouseDown = (e) => {
+      // Get clientX/Y from mouse or touch event
+      const getClientCoords = (e) => {
+        if (e.touches && e.touches.length > 0) {
+          return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+        }
+        return { clientX: e.clientX, clientY: e.clientY };
+      };
+
+      const handleStart = (e, isTouch = false) => {
         if (readOnly) return;
-        if (e.target.classList.contains('delete-x')) return;
-        if (e.target.classList.contains('resize-handle') || e.target.closest('.resize-handle')) {
-          e.preventDefault();
+        const target = e.target;
+        if (target.classList.contains('delete-x')) return;
+        const { clientX, clientY } = getClientCoords(e);
+        
+        if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
+          if (!isTouch) e.preventDefault();
           setIsResizing(true);
           const rect = elementRef.current.getBoundingClientRect();
           resizeStartRef.current = {
-            x: e.clientX,
-            y: e.clientY,
+            x: clientX,
+            y: clientY,
             width: rect.width,
             height: rect.height,
             startX: rect.left,
@@ -3334,31 +3478,36 @@
           };
           return;
         }
-        if (e.target.classList.contains('rotate-handle') || e.target.closest('.rotate-handle')) {
-          e.preventDefault();
+        if (target.classList.contains('rotate-handle') || target.closest('.rotate-handle')) {
+          if (!isTouch) e.preventDefault();
           setIsRotating(true);
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const centerY = rect.top + rect.height / 2;
           rotateStartRef.current = {
-            x: e.clientX,
-            y: e.clientY,
+            x: clientX,
+            y: clientY,
             angle: rotation,
             centerX: centerX,
             centerY: centerY
           };
           return;
         }
-        e.preventDefault();
+        if (!isTouch) e.preventDefault();
         setIsDragging(true);
         const rect = elementRef.current.getBoundingClientRect();
         dragOffsetRef.current = { 
-          x: e.clientX - rect.left, 
-          y: e.clientY - rect.top 
+          x: clientX - rect.left, 
+          y: clientY - rect.top 
         };
       };
 
-      const handleMouseMove = useCallback((e) => {
+      const handleMouseDown = (e) => handleStart(e, false);
+      const handleTouchStart = (e) => handleStart(e, true);
+
+      const handleMove = useCallback((e) => {
+        const { clientX, clientY } = getClientCoords(e);
+        
         if (isRotating) {
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
@@ -3366,46 +3515,38 @@
           
           const startDx = rotateStartRef.current.x - rotateStartRef.current.centerX;
           const startDy = rotateStartRef.current.y - rotateStartRef.current.centerY;
-          const currentDx = e.clientX - centerX;
-          const currentDy = e.clientY - centerY;
+          const currentDx = clientX - centerX;
+          const currentDy = clientY - centerY;
           
           const startAngle = Math.atan2(startDy, startDx) * (180 / Math.PI);
           const currentAngle = Math.atan2(currentDy, currentDx) * (180 / Math.PI);
           let deltaAngle = currentAngle - startAngle;
           
-          // Handle angle wrapping (crossing 180/-180 boundary) for smooth rotation
           if (deltaAngle > 180) {
             deltaAngle -= 360;
           } else if (deltaAngle < -180) {
             deltaAngle += 360;
           }
           
-          // Apply rotation sensitivity (0.25 = 25% speed, much slower rotation)
-          // Slower rotation sensitivity (0.15 = 15% speed for fine control)
           const rotationSensitivity = 0.15;
           deltaAngle *= rotationSensitivity;
           
-          // Calculate new rotation and ensure smooth transition through all angles
           let newRotation = rotateStartRef.current.angle + deltaAngle;
-          
-          // Normalize to 0-360 range, preserving smooth rotation through 181-270 degrees
           newRotation = ((newRotation % 360) + 360) % 360;
           
           setRotation(newRotation);
         } else if (isResizing) {
           const parent = elementRef.current.parentElement;
           const parentRect = parent.getBoundingClientRect();
-          const deltaX = e.clientX - resizeStartRef.current.x;
-          const deltaY = e.clientY - resizeStartRef.current.y;
+          const deltaX = clientX - resizeStartRef.current.x;
+          const deltaY = clientY - resizeStartRef.current.y;
           
           let newWidth = resizeStartRef.current.width + deltaX;
           let newHeight = resizeStartRef.current.height + deltaY;
           
-          // Min size
           newWidth = Math.max(30, newWidth);
           newHeight = Math.max(30, newHeight);
           
-          // Max size (80% of card)
           const maxWidth = parentRect.width * 0.8;
           const maxHeight = parentRect.height * 0.8;
           newWidth = Math.min(newWidth, maxWidth);
@@ -3415,15 +3556,14 @@
         } else if (isDragging) {
           const parent = elementRef.current.parentElement;
           const parentRect = parent.getBoundingClientRect();
-          let newX = e.clientX - parentRect.left - dragOffsetRef.current.x;
-          let newY = e.clientY - parentRect.top - dragOffsetRef.current.y;
+          let newX = clientX - parentRect.left - dragOffsetRef.current.x;
+          let newY = clientY - parentRect.top - dragOffsetRef.current.y;
           
-          // Allow stickers to go outside the frame (will be clipped by overflow: hidden)
           setPosition({ x: newX, y: newY });
         }
       }, [isDragging, isResizing, isRotating, size.width, size.height]);
 
-      const handleMouseUp = useCallback(() => {
+      const handleEnd = useCallback(() => {
         if (isDragging) {
           setIsDragging(false);
           onMove(position.x, position.y);
@@ -3440,14 +3580,21 @@
 
       useEffect(() => {
         if (isDragging || isResizing || isRotating) {
+          const handleMouseMove = (e) => handleMove(e);
+          const handleTouchMove = (e) => { e.preventDefault(); handleMove(e); };
+          
           window.addEventListener('mousemove', handleMouseMove);
-          window.addEventListener('mouseup', handleMouseUp);
+          window.addEventListener('mouseup', handleEnd);
+          window.addEventListener('touchmove', handleTouchMove, { passive: false });
+          window.addEventListener('touchend', handleEnd);
           return () => {
             window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleEnd);
           };
         }
-      }, [isDragging, isResizing, isRotating, handleMouseMove, handleMouseUp]);
+      }, [isDragging, isResizing, isRotating, handleMove, handleEnd]);
 
       return (
         <div
@@ -3459,12 +3606,14 @@
             width: size.width,
             height: size.height,
             transform: `rotate(${rotation}deg)`,
-            transformOrigin: 'center center'
+            transformOrigin: 'center center',
+            touchAction: 'none'
           }}
           onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           {sticker.image ? (
-            <img src={sticker.image} alt="Sticker" />
+            <img src={sticker.image} alt="Sticker" draggable={false} />
           ) : sticker.emoji ? (
             <span style={{ fontSize: size.width * 0.8 }}>{sticker.emoji}</span>
           ) : null}

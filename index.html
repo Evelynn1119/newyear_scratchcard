@@ -95,6 +95,39 @@
       }
     }
 
+    /* ========== MOBILE LAYOUT ========== */
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+        min-height: auto;
+        overflow-y: auto;
+      }
+
+      .left-panel {
+        width: 100%;
+        min-width: 100%;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--main-pink);
+        box-shadow: 0 4px 20px rgba(254, 213, 212, 0.2);
+      }
+
+      .panel-content {
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+
+      .right-panel {
+        width: 100%;
+        min-height: 400px;
+        padding: 1.5rem;
+      }
+
+      .right-panel-text {
+        display: none; /* Hide decorative text on mobile */
+      }
+    }
+
     .panel-header {
       padding: 1.5rem;
       text-align: center;
@@ -710,6 +743,20 @@
       overflow: hidden;
     }
 
+    @media (max-width: 768px) {
+      .card-preview {
+        width: 280px;
+        height: 490px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .card-preview {
+        width: 260px;
+        height: 455px;
+      }
+    }
+
     .card-preview.stars-pattern::before {
       content: '';
       position: absolute;
@@ -1142,6 +1189,7 @@
       width: 100%;
       max-width: 100vw;
       overflow-x: hidden;
+      overflow-y: auto; /* Enable vertical scrolling */
       box-sizing: border-box;
     }
 
@@ -1158,12 +1206,22 @@
 
     @media (max-width: 768px) {
       .preview-mode {
-        padding: 20px;
+        padding: 15px;
+        padding-bottom: 80px; /* Extra space at bottom for scrolling */
+        min-height: auto;
+        height: auto;
       }
       .preview-header {
         flex-direction: column;
         align-items: flex-start;
         text-align: left;
+        margin-bottom: 1.5rem;
+      }
+      .preview-header h1 {
+        font-size: 1.2rem;
+      }
+      .preview-header p {
+        font-size: 0.8rem;
       }
     }
 
@@ -1258,16 +1316,18 @@
     @media (max-width: 768px) {
       .artwork-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem;
-        padding: 0 15px;
+        gap: 1rem;
+        padding: 0 10px;
+        padding-bottom: 20px;
       }
     }
 
     @media (max-width: 480px) {
       .artwork-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 0 10px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        padding: 0 5px;
+        padding-bottom: 20px;
       }
     }
 
@@ -1848,11 +1908,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow-y: auto;
+      padding: 20px;
     }
 
     .scratch-container {
       position: relative;
       z-index: 10;
+    }
+
+    @media (max-width: 480px) {
+      .scratch-overlay {
+        padding: 10px;
+      }
+      .scratch-canvas {
+        max-width: 90vw;
+        max-height: 70vh;
+      }
     }
 
     .scratch-underlay {
@@ -1916,10 +1988,18 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      overflow-y: auto;
+      padding: 20px;
     }
 
     .reveal-complete .card-preview {
       animation: revealPop 0.5s ease-out;
+    }
+
+    @media (max-width: 480px) {
+      .reveal-complete {
+        padding: 15px;
+      }
     }
 
     @keyframes revealPop {

@@ -1096,6 +1096,89 @@
       pointer-events: none;
     }
 
+    .card-image-frame-draggable {
+      cursor: grab;
+      user-select: none;
+      border-radius: 0.25rem;
+      overflow: visible;
+    }
+
+    .card-image-frame-draggable.dragging {
+      cursor: grabbing;
+    }
+
+    .card-image-frame-draggable:hover {
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .card-image-frame-draggable .resize-handle {
+      position: absolute;
+      bottom: -8px;
+      right: -8px;
+      width: 20px;
+      height: 20px;
+      background: var(--main-red);
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: nwse-resize;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+      pointer-events: all;
+    }
+
+    .card-image-frame-draggable .resize-handle::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .card-image-frame-draggable:hover .resize-handle { opacity: 1; }
+
+    .card-image-frame-draggable .rotate-handle {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 24px;
+      height: 24px;
+      background: var(--main-red);
+      border: 2px solid white;
+      border-radius: 50%;
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 10;
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-image-frame-draggable .rotate-handle::before {
+      content: '↻';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .card-image-frame-draggable:hover .rotate-handle { opacity: 1; }
+    .card-image-frame-draggable.rotating .rotate-handle { cursor: grabbing; opacity: 1; }
+
+    /* Mobile: Always show handles for touch interaction */
+    @media (max-width: 768px) {
+      .card-image-frame-draggable .resize-handle,
+      .card-image-frame-draggable .rotate-handle {
+        opacity: 1;
+      }
+    }
+
     /* Layer 3: Draggable Photo (TOP layer) */
     .card-photo-draggable {
       position: absolute;
@@ -1203,6 +1286,21 @@
       pointer-events: none;
     }
 
+    .card-content-overlay .card-title {
+      flex-shrink: 0;
+    }
+
+    .card-content-overlay .card-photo-placeholder-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-content-overlay .card-subtitle {
+      flex-shrink: 0;
+    }
+
     .card-content-overlay > * {
       pointer-events: auto;
     }
@@ -1224,8 +1322,8 @@
       color: white;
       text-align: center;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-      margin-top: 1.5rem; /* Moved lower */
-      margin-bottom: 1rem;
+      margin-top: 0;
+      margin-bottom: 0;
       letter-spacing: 1px;
     }
 
@@ -1346,6 +1444,8 @@
       align-items: center;
       justify-content: center;
       color: rgba(255, 255, 255, 0.4);
+      margin: 0 auto;
+      align-self: center;
     }
 
     .card-photo-placeholder .icon { font-size: 1.75rem; margin-bottom: 0.4rem; }
@@ -1358,7 +1458,8 @@
       color: white;
       text-align: center;
       text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      margin-top: 1rem;
+      margin-top: auto;
+      margin-bottom: 1rem;
       line-height: 1.4;
     }
 
@@ -2657,12 +2758,12 @@
         return {
           startDate: '',
           cards: {
-            1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-            2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: 'PLAYLIST.jpg', photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-            3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-            4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-            5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-            6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
+            1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+            2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+            3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+            4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+            5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+            6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
           }
         };
       });
@@ -2732,6 +2833,11 @@
         const nextDay = editingDay + 1;
         if (nextDay <= 6) {
           setEditingDay(nextDay);
+          setEditorView('edit');
+          // Open mobile panel when navigating to next card
+          if (window.innerWidth <= 768) {
+            setMobilePanelOpen(true);
+          }
         } else {
           handleBackToList();
         }
@@ -3032,8 +3138,14 @@
       // Photo transform functions
       const updatePhotoTransform = (updates) => {
         if (!editingDay) return;
-        const currentTransform = currentCard.photoTransform || { x: 50, y: 120, width: 180, height: 180, rotation: 0 };
+        const currentTransform = currentCard.photoTransform || { x: 50, y: 50, width: 180, height: 180, rotation: 0 };
         updateCard('photoTransform', { ...currentTransform, ...updates });
+      };
+
+      const updateImageFrameTransform = (updates) => {
+        if (!editingDay) return;
+        const currentTransform = currentCard.imageFrameTransform || { width: 350, height: 350, rotation: 0 };
+        updateCard('imageFrameTransform', { ...currentTransform, ...updates });
       };
 
       const currentTemplate = currentCard 
@@ -3066,12 +3178,12 @@
                         setSession({
                           startDate: '',
                           cards: {
-                            1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-                            2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: 'PLAYLIST.jpg', photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-                            3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-                            4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-                            5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
-                            6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 120, width: 180, height: 180, rotation: 0 }, emojis: [], completed: false },
+                            1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+                            2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+                            3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+                            4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+                            5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+                            6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
                           }
                         });
                         setMode('editor');
@@ -3172,6 +3284,7 @@
                   content={session.cards[viewingDay]}
                   template={TEMPLATES.find(t => t.id === session.cards[viewingDay].template)}
                   readOnly
+                  onImageFrameTransform={() => {}}
                 />
                 <span className="hint">Tap anywhere to close</span>
               </div>
@@ -3502,6 +3615,7 @@
                 onStickerRotate={updateStickerRotation}
                 onStickerDelete={deleteSticker}
                 onPhotoTransform={updatePhotoTransform}
+                onImageFrameTransform={updateImageFrameTransform}
               />
             )}
           </main>
@@ -3690,7 +3804,7 @@
           <button className="close-scratch" onClick={onClose}>✕</button>
           
           <div className={`scratch-underlay ${cardVisible ? 'visible' : ''}`}>
-          <CardPreview content={cardContent} template={template} readOnly />
+          <CardPreview content={cardContent} template={template} readOnly onImageFrameTransform={() => {}} />
         </div>
         
         <div className="scratch-container">
@@ -3719,12 +3833,14 @@
     }
 
     // ========== CARD PREVIEW ==========
-    function CardPreview({ content, template, onStickerMove, onStickerResize, onStickerRotate, onStickerDelete, onPhotoTransform, readOnly }) {
+    function CardPreview({ content, template, onStickerMove, onStickerResize, onStickerRotate, onStickerDelete, onPhotoTransform, onImageFrameTransform, readOnly }) {
       if (!content || !template) return null;
 
       // Find the image background
       const imageBgConfig = IMAGE_BGS.find(bg => bg.id === content.imageBg);
-      const photoTransform = content.photoTransform || { x: 50, y: 120, width: 180, height: 180, rotation: 0 };
+      const photoTransform = content.photoTransform || { x: 50, y: 50, width: 180, height: 180, rotation: 0 };
+      // Use imageFrameTransform if provided, otherwise let component auto-center (no x/y)
+      const imageFrameTransform = content.imageFrameTransform || { width: 350, height: 350, rotation: 0 };
 
       return (
         <div 
@@ -3746,13 +3862,13 @@
             />
           )}
 
-          {/* Layer 3: Image Frame (middle layer) */}
+          {/* Layer 3: Image Frame (middle layer) - draggable/resizable */}
           {imageBgConfig && (
-            <div 
-              className="card-image-frame"
-              style={{
-                backgroundImage: `url(${imageBgConfig.image})`,
-              }}
+            <DraggableImageFrame
+              image={imageBgConfig.image}
+              transform={imageFrameTransform}
+              onTransform={readOnly ? () => {} : onImageFrameTransform}
+              readOnly={readOnly}
             />
           )}
 
@@ -3762,11 +3878,13 @@
               {content.title}
             </h2>
 
-            {!content.photo && (
-              <div className="card-photo-placeholder">
-                <span className="text">Upload photo</span>
-              </div>
-            )}
+            <div className="card-photo-placeholder-wrapper">
+              {!content.photo && (
+                <div className="card-photo-placeholder">
+                  <span className="text">Upload photo</span>
+                </div>
+              )}
+            </div>
 
             {content.subtitle && (
               <p className={`card-subtitle size-${content.subtitleSize || 'mid'} color-${content.subtitleColor || 'white'} weight-${content.subtitleBold ? 'bold' : 'normal'} style-${content.subtitleItalic ? 'italic' : 'normal'}`}>
@@ -3928,6 +4046,209 @@
           onTouchStart={handleTouchStart}
         >
           <img src={photo} alt="Your photo" draggable={false} />
+          {!readOnly && (
+            <>
+              <div className="resize-handle"></div>
+              <div className="rotate-handle" style={{ transform: `translateX(-50%) rotate(${-rotation}deg)` }}></div>
+            </>
+          )}
+        </div>
+      );
+    }
+
+    // ========== DRAGGABLE IMAGE FRAME ==========
+    function DraggableImageFrame({ image, transform, onTransform, readOnly }) {
+      const [isDragging, setIsDragging] = useState(false);
+      const [isResizing, setIsResizing] = useState(false);
+      const [isRotating, setIsRotating] = useState(false);
+      const [size, setSize] = useState({ width: transform.width || 350, height: transform.height || 350 });
+      const [rotation, setRotation] = useState(transform.rotation || 0);
+      const elementRef = useRef(null);
+      const dragOffsetRef = useRef({ x: 0, y: 0 });
+      const resizeStartRef = useRef({ x: 0, y: 0, width: 0, height: 0 });
+      const rotateStartRef = useRef({ x: 0, y: 0, angle: 0, centerX: 0, centerY: 0 });
+
+      // Calculate centered position if not provided
+      const calculateCenteredPosition = () => {
+        if (elementRef.current) {
+          const parent = elementRef.current.parentElement;
+          if (parent) {
+            const parentRect = parent.getBoundingClientRect();
+            const frameWidth = size.width;
+            const frameHeight = size.height;
+            return {
+              x: (parentRect.width - frameWidth) / 2,
+              y: (parentRect.height - frameHeight) / 2
+            };
+          }
+        }
+        // Fallback: approximate center for 320px card with 350px frame
+        return { x: -15, y: 105 };
+      };
+
+      const [position, setPosition] = useState(() => {
+        if (transform.x !== undefined && transform.y !== undefined) {
+          return { x: transform.x, y: transform.y };
+        }
+        // Use fallback for initial render
+        return { x: -15, y: 105 };
+      });
+
+      // Update position when transform changes or component mounts
+      useEffect(() => {
+        if (transform.x === undefined || transform.y === undefined) {
+          // Wait for DOM to be ready, then calculate center
+          const timer = setTimeout(() => {
+            const centered = calculateCenteredPosition();
+            setPosition(centered);
+          }, 10);
+          return () => clearTimeout(timer);
+        } else {
+          setPosition({ x: transform.x, y: transform.y });
+        }
+      }, [transform.x, transform.y, size.width, size.height]);
+
+      // Recalculate center on window resize
+      useEffect(() => {
+        if (transform.x === undefined || transform.y === undefined) {
+          const handleResize = () => {
+            const centered = calculateCenteredPosition();
+            setPosition(centered);
+          };
+          window.addEventListener('resize', handleResize);
+          return () => window.removeEventListener('resize', handleResize);
+        }
+      }, [transform.x, transform.y, size.width, size.height]);
+
+      const getClientCoords = (e) => {
+        if (e.touches && e.touches.length > 0) {
+          return { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY };
+        }
+        return { clientX: e.clientX, clientY: e.clientY };
+      };
+
+      const handleStart = (e, isTouch = false) => {
+        if (readOnly) return;
+        const target = e.target;
+        const { clientX, clientY } = getClientCoords(e);
+        
+        if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
+          if (!isTouch) e.preventDefault();
+          setIsResizing(true);
+          const rect = elementRef.current.getBoundingClientRect();
+          resizeStartRef.current = { x: clientX, y: clientY, width: rect.width, height: rect.height };
+          return;
+        }
+        if (target.classList.contains('rotate-handle') || target.closest('.rotate-handle')) {
+          if (!isTouch) e.preventDefault();
+          setIsRotating(true);
+          const rect = elementRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          rotateStartRef.current = { x: clientX, y: clientY, angle: rotation, centerX, centerY };
+          return;
+        }
+        if (!isTouch) e.preventDefault();
+        setIsDragging(true);
+        const rect = elementRef.current.getBoundingClientRect();
+        dragOffsetRef.current = { x: clientX - rect.left, y: clientY - rect.top };
+      };
+
+      const handleMouseDown = (e) => handleStart(e, false);
+      const handleTouchStart = (e) => handleStart(e, true);
+
+      const handleMove = useCallback((e) => {
+        const { clientX, clientY } = getClientCoords(e);
+        
+        if (isRotating) {
+          const rect = elementRef.current.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const startDx = rotateStartRef.current.x - rotateStartRef.current.centerX;
+          const startDy = rotateStartRef.current.y - rotateStartRef.current.centerY;
+          const currentDx = clientX - centerX;
+          const currentDy = clientY - centerY;
+          const startAngle = Math.atan2(startDy, startDx) * (180 / Math.PI);
+          const currentAngle = Math.atan2(currentDy, currentDx) * (180 / Math.PI);
+          let deltaAngle = currentAngle - startAngle;
+          if (deltaAngle > 180) deltaAngle -= 360;
+          else if (deltaAngle < -180) deltaAngle += 360;
+          const rotationSensitivity = 0.15;
+          deltaAngle *= rotationSensitivity;
+          let newRotation = rotateStartRef.current.angle + deltaAngle;
+          newRotation = ((newRotation % 360) + 360) % 360;
+          setRotation(newRotation);
+        } else if (isResizing) {
+          const deltaX = clientX - resizeStartRef.current.x;
+          const deltaY = clientY - resizeStartRef.current.y;
+          let newWidth = Math.max(150, resizeStartRef.current.width + deltaX);
+          let newHeight = Math.max(150, resizeStartRef.current.height + deltaY);
+          newWidth = Math.min(newWidth, 500);
+          newHeight = Math.min(newHeight, 500);
+          setSize({ width: newWidth, height: newHeight });
+        } else if (isDragging) {
+          const parent = elementRef.current.parentElement;
+          const parentRect = parent.getBoundingClientRect();
+          let newX = clientX - parentRect.left - dragOffsetRef.current.x;
+          let newY = clientY - parentRect.top - dragOffsetRef.current.y;
+          setPosition({ x: newX, y: newY });
+        }
+      }, [isDragging, isResizing, isRotating, rotation]);
+
+      const handleEnd = useCallback(() => {
+        if (isDragging) {
+          setIsDragging(false);
+          onTransform({ x: position.x, y: position.y });
+        }
+        if (isResizing) {
+          setIsResizing(false);
+          onTransform({ width: size.width, height: size.height });
+        }
+        if (isRotating) {
+          setIsRotating(false);
+          onTransform({ rotation });
+        }
+      }, [isDragging, isResizing, isRotating, position, size, rotation, onTransform]);
+
+      useEffect(() => {
+        if (isDragging || isResizing || isRotating) {
+          const handleMouseMove = (e) => handleMove(e);
+          const handleTouchMove = (e) => { e.preventDefault(); handleMove(e); };
+          
+          window.addEventListener('mousemove', handleMouseMove);
+          window.addEventListener('mouseup', handleEnd);
+          window.addEventListener('touchmove', handleTouchMove, { passive: false });
+          window.addEventListener('touchend', handleEnd);
+          return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleEnd);
+            window.removeEventListener('touchmove', handleTouchMove);
+            window.removeEventListener('touchend', handleEnd);
+          };
+        }
+      }, [isDragging, isResizing, isRotating, handleMove, handleEnd]);
+
+      return (
+        <div
+          ref={elementRef}
+          className={`card-image-frame-draggable ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${isRotating ? 'rotating' : ''}`}
+          style={{
+            position: 'absolute',
+            left: position.x,
+            top: position.y,
+            width: size.width,
+            height: size.height,
+            transform: `rotate(${rotation}deg)`,
+            backgroundImage: `url(${image})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            zIndex: 1,
+            touchAction: 'none',
+          }}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        >
           {!readOnly && (
             <>
               <div className="resize-handle"></div>

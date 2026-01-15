@@ -139,6 +139,8 @@
         transform: translateX(0);
       }
 
+      /* Panel is shown when mobile-open class is present */
+
       .mobile-panel-backdrop {
         display: none;
         position: fixed;
@@ -154,18 +156,25 @@
         opacity: 1;
       }
 
+      /* Show backdrop when editing */
+      .mobile-panel-backdrop.editing {
+        display: block;
+        opacity: 1;
+      }
+
       .mobile-toggle-btn {
         display: flex;
         position: fixed;
-        left: 12px;
-        top: 12px;
-        padding: 10px 16px;
+        left: 50%;
+        bottom: 40px;
+        transform: translateX(-50%);
+        padding: 16px 32px;
         background: var(--main-red);
         border: none;
         border-radius: 2rem;
         color: white;
         font-family: 'Quicksand', sans-serif;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
         letter-spacing: 1px;
         align-items: center;
@@ -173,12 +182,18 @@
         gap: 6px;
         z-index: 901;
         cursor: pointer;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 20px rgba(228, 65, 45, 0.4);
         transition: all 0.3s ease;
+        min-width: 200px;
+        max-width: calc(100% - 40px);
       }
 
       .mobile-toggle-btn:active {
-        transform: scale(0.95);
+        transform: translateX(-50%) scale(0.95);
+      }
+
+      .mobile-toggle-btn:hover {
+        box-shadow: 0 6px 25px rgba(228, 65, 45, 0.5);
       }
 
       /* Mobile save button on card preview */
@@ -206,6 +221,107 @@
         transform: scale(0.95);
       }
 
+      /* Mobile card dots indicator */
+      .mobile-card-dots {
+        display: flex;
+        position: fixed;
+        left: 50%;
+        top: 16px;
+        transform: translateX(-50%);
+        gap: 10px;
+        z-index: 900;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 12px;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .mobile-card-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(228, 65, 45, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-card-dot.active {
+        background: var(--main-red);
+        width: 10px;
+        height: 10px;
+      }
+
+      /* Mobile back button */
+      .mobile-back-btn {
+        display: flex;
+        position: fixed;
+        left: 12px;
+        top: 12px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(228, 65, 45, 0.2);
+        border-radius: 2rem;
+        color: var(--main-red);
+        font-family: 'Quicksand', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        z-index: 901;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-back-btn:active {
+        transform: scale(0.95);
+      }
+
+      .mobile-back-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* Mobile panel pull tab/arrow - always visible when editing */
+      .mobile-panel-tab {
+        display: flex;
+        position: fixed;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 32px;
+        height: 80px;
+        background: var(--main-red);
+        border-radius: 0 12px 12px 0;
+        align-items: center;
+        justify-content: center;
+        z-index: 902;
+        cursor: pointer;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-panel-tab::before {
+        content: '→';
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        transition: transform 0.3s ease;
+      }
+
+      .mobile-panel-tab.panel-open::before {
+        transform: rotate(180deg);
+      }
+
+      .mobile-panel-tab:active {
+        transform: translateY(-50%) scale(0.95);
+      }
+
       .panel-content {
         max-height: none;
         overflow-y: auto;
@@ -230,14 +346,36 @@
         justify-content: center;
         height: 100%;
         text-align: center;
-        color: var(--text-light);
+        color: var(--text-dark);
         padding: 2rem;
+        padding-bottom: 120px; /* Space for bottom button */
       }
 
       .mobile-list-hint .hint-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
         opacity: 0.5;
+      }
+
+      .mobile-list-hint .headline {
+        font-family: 'Quicksand', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--main-red);
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+        letter-spacing: 1px;
+      }
+
+      .mobile-list-hint .sub-headline {
+        font-family: 'Quicksand', sans-serif;
+        font-size: 1rem;
+        color: var(--text-light);
+        opacity: 0.8;
+        max-width: 320px;
+        line-height: 1.6;
+        letter-spacing: 0.3px;
+        margin-bottom: 2rem;
       }
 
       .mobile-list-hint p {
@@ -249,8 +387,19 @@
     }
 
     /* Hide mobile hint on desktop */
-    .mobile-list-hint {
-      display: none;
+    @media (min-width: 769px) {
+      .mobile-list-hint {
+        display: none;
+      }
+      .mobile-card-dots {
+        display: none;
+      }
+      .mobile-back-btn {
+        display: none;
+      }
+      .mobile-panel-tab {
+        display: none;
+      }
     }
 
     .panel-header {
@@ -304,6 +453,39 @@
       background: transparent;
       display: flex;
       justify-content: center;
+    }
+
+    /* ========== ATTRIBUTION FOOTER ========== */
+    .attribution-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      text-align: center;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(254, 213, 212, 0.3);
+      z-index: 100;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 13px;
+      color: var(--text-light);
+    }
+
+    .attribution-footer a {
+      color: var(--main-red);
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .attribution-footer a:hover {
+      opacity: 0.8;
+    }
+
+    .attribution-footer .heart {
+      color: var(--main-red);
+      margin: 0 4px;
     }
 
     /* ========== SECTIONS ========== */
@@ -1641,16 +1823,76 @@
     .modal-close:hover { opacity: 1; }
 
     /* ========== HAPPY NEW YEAR MODAL ========== */
-    .happy-new-year-popup-image {
+    .happy-new-year-popup-container {
       max-width: 90%;
       max-height: 80vh;
-      object-fit: contain;
+      position: relative;
       animation: popupGrowAndSwing 1.5s ease-out forwards;
       filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.4));
       cursor: pointer;
       z-index: 10;
-      position: relative;
       transform-origin: center center;
+      display: inline-block;
+    }
+
+    .happy-new-year-popup-image {
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      display: block;
+    }
+
+    /* First image sets the container size - make it relative and visible initially */
+    .happy-new-year-popup-image:first-child {
+      position: relative;
+      opacity: 1;
+      animation: popupCard1 1.6s ease-in-out infinite;
+    }
+
+    /* Animation for cycling through popupcard1-4 - each image shows for 25% of the cycle */
+    .happy-new-year-popup-image:nth-child(1) {
+      animation: popupCard1 1.6s ease-in-out infinite;
+    }
+
+    .happy-new-year-popup-image:nth-child(2) {
+      animation: popupCard2 1.6s ease-in-out infinite;
+    }
+
+    .happy-new-year-popup-image:nth-child(3) {
+      animation: popupCard3 1.6s ease-in-out infinite;
+    }
+
+    .happy-new-year-popup-image:nth-child(4) {
+      animation: popupCard4 1.6s ease-in-out infinite;
+    }
+
+    @keyframes popupCard1 {
+      0%, 24% { opacity: 1; }
+      25%, 100% { opacity: 0; }
+    }
+
+    @keyframes popupCard2 {
+      0%, 24% { opacity: 0; }
+      25%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    @keyframes popupCard3 {
+      0%, 49% { opacity: 0; }
+      50%, 74% { opacity: 1; }
+      75%, 100% { opacity: 0; }
+    }
+
+    @keyframes popupCard4 {
+      0%, 74% { opacity: 0; }
+      75%, 99% { opacity: 1; }
+      100% { opacity: 0; }
     }
 
     /* Growing animation + swing - starts small, grows, then swings */
@@ -1698,8 +1940,13 @@
       animation: fadeOut 0.3s ease forwards;
     }
 
-    .happy-new-year-overlay.closing .happy-new-year-popup-image {
+    .happy-new-year-overlay.closing .happy-new-year-popup-container {
       animation: popupShrink 0.3s ease forwards;
+    }
+
+    .happy-new-year-overlay.closing .happy-new-year-popup-image {
+      animation: none;
+      opacity: 0;
     }
 
     @keyframes fadeOut {
@@ -1778,7 +2025,7 @@
     }
 
     @media (max-width: 768px) {
-      .happy-new-year-popup-image {
+      .happy-new-year-popup-container {
         max-width: 95%;
       }
     }
@@ -2297,7 +2544,7 @@
       { id: 'imageBg1', image: 'image_bg_1.png', label: 'Frame 1' },
       { id: 'imageBg2', image: 'image_bg_2.png', label: 'Frame 2' },
       { id: 'imageBg3', image: 'image_bg_3.png', label: 'Frame 3' },
-      { id: 'imageBg4', image: 'Image_bg_4.png', label: 'Frame 4' },
+      { id: 'imageBg4', image: 'image_bg_4.png', label: 'Frame 4' },
       { id: 'imageBg5', image: 'image_bg_5.png', label: 'Frame 5' },
       { id: 'imageBg6', image: 'image_bg_6.png', label: 'Frame 6' },
     ];
@@ -2457,6 +2704,7 @@
       const handleSelectDay = (dayId) => {
         setEditingDay(dayId);
         setEditorView('edit');
+        // Don't auto-open panel - user will click the arrow tab to open it
       };
 
       const handleBackToList = () => {
@@ -2466,6 +2714,14 @@
         }
         setEditorView('list');
         setEditingDay(null);
+      };
+
+      // Navigate to previous card
+      const handlePreviousCard = () => {
+        if (editingDay && editingDay > 1) {
+          const previousDay = editingDay - 1;
+          handleSelectDay(previousDay);
+        }
       };
 
       const handleSaveCard = () => {
@@ -2930,13 +3186,38 @@
               >
                 {/* Hearts Animation Container */}
                 <div className="hearts-container" />
-                <img 
-                  src="popup.png" 
-                  alt="Happy New Year!"
-                  className="happy-new-year-popup-image"
-                />
+                <div className="happy-new-year-popup-container">
+                  <img 
+                    src="popupcard1.png" 
+                    alt="Happy New Year!"
+                    className="happy-new-year-popup-image"
+                  />
+                  <img 
+                    src="popupcard2.png" 
+                    alt="Happy New Year!"
+                    className="happy-new-year-popup-image"
+                  />
+                  <img 
+                    src="popupcard3.png" 
+                    alt="Happy New Year!"
+                    className="happy-new-year-popup-image"
+                  />
+                  <img 
+                    src="popupcard4.png" 
+                    alt="Happy New Year!"
+                    className="happy-new-year-popup-image"
+                  />
+                </div>
               </div>
             )}
+
+            {/* Attribution Footer */}
+            <div className="attribution-footer">
+              Made with <span className="heart">♥</span> by{' '}
+              <a href="https://www.instagram.com/evelynn.creates" target="_blank" rel="noopener noreferrer">
+                @evelynn.creates
+              </a>
+            </div>
           </>
         );
       }
@@ -2944,13 +3225,37 @@
       // ========== EDITOR MODE ==========
       return (
         <div className="app-container">
-          {/* Mobile toggle button */}
-          <button 
-            className="mobile-toggle-btn"
-            onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
-          >
-            {mobilePanelOpen ? '✕ CLOSE' : '✎ EDIT HERE'}
-          </button>
+          {/* Mobile toggle button - Create Your Card */}
+          {editorView === 'list' && (
+            <button 
+              className="mobile-toggle-btn"
+              onClick={() => handleSelectDay(1)}
+            >
+              Create Your Card
+            </button>
+          )}
+
+          {/* Mobile card dots indicator - show when editing */}
+          {editorView === 'edit' && editingDay && (
+            <div className="mobile-card-dots">
+              {[1, 2, 3, 4, 5, 6].map((day) => (
+                <div
+                  key={day}
+                  className={`mobile-card-dot ${editingDay === day ? 'active' : ''}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Mobile back button - show when editing and not on card 1 */}
+          {editorView === 'edit' && editingDay && editingDay > 1 && !mobilePanelOpen && (
+            <button 
+              className="mobile-back-btn"
+              onClick={handlePreviousCard}
+            >
+              ← BACK
+            </button>
+          )}
 
           {/* Mobile save button - only show in edit mode */}
           {editorView === 'edit' && !mobilePanelOpen && (
@@ -2962,11 +3267,24 @@
             </button>
           )}
 
-          {/* Mobile backdrop */}
-          <div 
-            className={`mobile-panel-backdrop ${mobilePanelOpen ? 'visible' : ''}`}
-            onClick={() => setMobilePanelOpen(false)}
-          />
+          {/* Mobile panel pull tab - always visible when editing */}
+          {editorView === 'edit' && (
+            <button
+              className={`mobile-panel-tab ${mobilePanelOpen ? 'panel-open' : ''}`}
+              onClick={() => setMobilePanelOpen(!mobilePanelOpen)}
+              aria-label="Toggle editing panel"
+            />
+          )}
+
+          {/* Mobile backdrop - show when panel is open */}
+          {mobilePanelOpen && (
+            <div 
+              className="mobile-panel-backdrop visible"
+              onClick={() => {
+                setMobilePanelOpen(false);
+              }}
+            />
+          )}
 
           <aside className={`left-panel ${mobilePanelOpen ? 'mobile-open' : ''}`}>
             <div className="panel-header">
@@ -3170,8 +3488,8 @@
                   From My Heart<br />to Your Screen.
                 </div>
                 <div className="mobile-list-hint">
-                  <div className="hint-icon">✨</div>
-                  <p>Tap the menu button to select a card to edit</p>
+                  <h1 className="headline">Scratch into the New Year! 🐎</h1>
+                  <p className="sub-headline">Design your own digital lucky card. Scratch, wish, and share the joy with friends and family.</p>
                 </div>
               </>
             )}
@@ -3240,6 +3558,14 @@
               </div>
             </div>
           )}
+
+          {/* Attribution Footer */}
+          <div className="attribution-footer">
+            Made with <span className="heart">♥</span> by{' '}
+            <a href="https://www.instagram.com/evelynn.creates" target="_blank" rel="noopener noreferrer">
+              @evelynn.creates
+            </a>
+          </div>
         </div>
       );
     }

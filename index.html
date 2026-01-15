@@ -119,8 +119,8 @@
         position: fixed;
         left: 0;
         top: 0;
-        width: 85%;
-        max-width: 340px;
+        width: calc(85% - 10px);
+        max-width: 330px;
         min-width: auto;
         height: 100vh;
         max-height: 100vh;
@@ -130,7 +130,7 @@
         transform: translateX(-100%);
         transition: transform 0.3s ease;
         overflow-y: auto;
-        background: rgba(255, 255, 255, 0.92);
+        background: rgba(255, 255, 255, 0.8);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
       }
@@ -2954,8 +2954,11 @@
 
           {/* Mobile save button - only show in edit mode */}
           {editorView === 'edit' && !mobilePanelOpen && (
-            <button className="mobile-save-btn" onClick={handleSaveCard}>
-              SAVE →
+            <button 
+              className="mobile-save-btn" 
+              onClick={editingDay === 6 ? handleFinish : handleSaveCard}
+            >
+              {editingDay === 6 ? 'FINISH AND SEND' : 'SAVE →'}
             </button>
           )}
 

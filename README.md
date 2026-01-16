@@ -226,7 +226,7 @@ When all 6 cards are scratched/revealed in preview mode, a special "Happy New Ye
 
 ## 📜 License
 
-Made with ❤️ by Evelynn
+Made with ❤️ by Evelynn Chang 
 
 For personal and commercial use.
 
@@ -234,14 +234,14 @@ For personal and commercial use.
 
 ## 🙏 Credits
 
-- Design & Development: [@evelynn.creates](https://www.instagram.com/evelynn.creates)
+- Design & Development: [@evelynn.creates_](https://www.instagram.com/evelynn.creates_)
 - Fonts: Google Fonts (Cormorant Garamond, Quicksand)
 
 ---
 
 ## 🔗 Links
 
-- **Instagram**: [@evelynn.creates](https://www.instagram.com/evelynn.creates)
+- **Instagram**: [@evelynn.creates_](https://www.instagram.com/evelynn.creates_)
 - **GitHub**: [newyear_scratchcard](https://github.com/Evelynn1119/newyear_scratchcard)
 
 ---

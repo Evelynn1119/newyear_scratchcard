@@ -785,13 +785,21 @@
       background: rgba(0, 0, 0, 0.02);
     }
 
+    .photo-upload-area {
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    
     .photo-upload-area input { 
-      display: none; 
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       opacity: 0;
       cursor: pointer;
+      z-index: 1;
     }
 
     /* Mobile: Ensure upload area is touchable */
@@ -3086,11 +3094,14 @@
       };
 
       const handleUploadClick = (e) => {
-        e.preventDefault();
+        // Ensure the file input is clicked
         e.stopPropagation();
-        if (fileInputRef.current) {
-          fileInputRef.current.click();
-        }
+        // Use setTimeout to ensure the click happens after any event propagation
+        setTimeout(() => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        }, 10);
       };
 
       // Camera handlers
@@ -3623,7 +3634,13 @@
                   <div className="edit-section">
                     <h3>PHOTO</h3>
                     <div className="photo-options">
-                      <div className="photo-upload-area" onClick={handleUploadClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleUploadClick(e); } }}>
+                      <label 
+                        className="photo-upload-area" 
+                        htmlFor="photo-upload-input"
+                        role="button" 
+                        tabIndex={0}
+                        onClick={handleUploadClick}
+                      >
                         <div className="upload-text">
                           {currentCard?.photo ? 'CHANGE' : 'UPLOAD'}
                         </div>
@@ -3631,11 +3648,10 @@
                           ref={fileInputRef}
                           id="photo-upload-input"
                           type="file" 
-                          accept="image/*" 
+                          accept="image/*"
                           onChange={handlePhotoUpload}
-                          style={{ display: 'none' }}
                         />
-                      </div>
+                      </label>
                       <div className="photo-camera-area" onClick={handleCameraClick}>
                         <div className="camera-text">
                           {currentCard?.photo ? 'RETAKE' : 'CAMERA'}

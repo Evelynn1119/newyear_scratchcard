@@ -775,6 +775,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .photo-upload-area:hover {
@@ -782,7 +785,27 @@
       background: rgba(0, 0, 0, 0.02);
     }
 
-    .photo-upload-area input { display: none; }
+    .photo-upload-area input { 
+      display: none; 
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* Mobile: Ensure upload area is touchable */
+    @media (max-width: 768px) {
+      .photo-upload-area {
+        min-height: 44px; /* Minimum touch target size */
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(228, 65, 45, 0.1);
+      }
+      .photo-upload-area:active {
+        background: rgba(0, 0, 0, 0.05);
+        transform: scale(0.98);
+      }
+    }
     .photo-upload-area .upload-text { 
       font-family: 'Quicksand', sans-serif;
       font-size: 0.75rem;
@@ -1101,6 +1124,7 @@
       user-select: none;
       border-radius: 0.25rem;
       overflow: visible;
+      z-index: 3 !important; /* Layer 3: Image_bg (above background) */
     }
 
     .card-image-frame-draggable.dragging {
@@ -1123,8 +1147,9 @@
       cursor: nwse-resize;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 20 !important; /* Very high to ensure it's clickable */
       pointer-events: all;
+      touch-action: none;
     }
 
     .card-image-frame-draggable .resize-handle::before {
@@ -1144,8 +1169,7 @@
     .card-image-frame-draggable .rotate-handle {
       position: absolute;
       top: -15px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: -15px;
       width: 24px;
       height: 24px;
       background: var(--main-red);
@@ -1154,8 +1178,9 @@
       cursor: grab;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 20 !important; /* Very high to ensure it's clickable */
       pointer-events: all;
+      touch-action: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1176,13 +1201,35 @@
       .card-image-frame-draggable .resize-handle,
       .card-image-frame-draggable .rotate-handle {
         opacity: 1;
+        width: 32px;
+        height: 32px;
+        pointer-events: all;
+        touch-action: none;
+      }
+      .card-image-frame-draggable .resize-handle {
+        bottom: -14px;
+        right: -14px;
+      }
+      .card-image-frame-draggable .rotate-handle {
+        top: -14px;
+        left: -14px;
+      }
+      .card-image-frame-draggable .resize-handle::before {
+        width: 10px;
+        height: 10px;
+      }
+      .card-image-frame-draggable .rotate-handle::before {
+        font-size: 18px;
+      }
+      .card-image-frame-draggable {
+        touch-action: none;
       }
     }
 
-    /* Layer 3: Draggable Photo (TOP layer) */
+    /* Layer 2: Draggable Photo */
     .card-photo-draggable {
       position: absolute;
-      z-index: 2;
+      z-index: 4 !important; /* Layer 2: Image (above image_bg) */
       cursor: grab;
       user-select: none;
       border-radius: 0.25rem;
@@ -1218,7 +1265,9 @@
       cursor: nwse-resize;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 20 !important; /* Very high to ensure it's clickable */
+      pointer-events: all;
+      touch-action: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1235,8 +1284,8 @@
 
     .card-photo-draggable .rotate-handle {
       position: absolute;
-      bottom: -24px;
-      left: 50%;
+      top: -15px;
+      left: -15px;
       width: 20px;
       height: 20px;
       background: var(--main-red);
@@ -1245,7 +1294,9 @@
       cursor: grab;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 20 !important; /* Very high to ensure it's clickable */
+      pointer-events: all;
+      touch-action: none;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1266,13 +1317,24 @@
       .card-photo-draggable .resize-handle,
       .card-photo-draggable .rotate-handle {
         opacity: 1;
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
+        pointer-events: all;
+        touch-action: none;
       }
-      .card-photo-draggable .resize-handle { bottom: -12px; right: -12px; }
-      .card-photo-draggable .rotate-handle { bottom: -32px; }
-      .card-photo-draggable .resize-handle::before { font-size: 14px; }
-      .card-photo-draggable .rotate-handle::before { font-size: 16px; }
+      .card-photo-draggable .resize-handle { 
+        bottom: -14px; 
+        right: -14px; 
+      }
+      .card-photo-draggable .rotate-handle { 
+        top: -14px; 
+        left: -14px; 
+      }
+      .card-photo-draggable .resize-handle::before { font-size: 16px; }
+      .card-photo-draggable .rotate-handle::before { font-size: 18px; }
+      .card-photo-draggable {
+        touch-action: none;
+      }
     }
 
     /* Layer 4: Content Overlay (title, subtitle, stickers) */
@@ -1492,6 +1554,7 @@
       user-select: none;
       transition: transform 0.1s;
       filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      z-index: 5 !important; /* Layer 1: Stickers (topmost) */
     }
 
     .card-sticker img {
@@ -1538,7 +1601,7 @@
       cursor: nwse-resize;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 21 !important; /* Above sticker */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1565,7 +1628,7 @@
       cursor: grab;
       opacity: 0;
       transition: opacity 0.2s;
-      z-index: 10;
+      z-index: 21 !important; /* Above sticker */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -3005,12 +3068,28 @@
         checkAllCardsRevealed(newRevealed);
       };
 
+      const fileInputRef = useRef(null);
+
       const handlePhotoUpload = (e) => {
         const file = e.target.files[0];
         if (file) {
           const reader = new FileReader();
-          reader.onload = (e) => updateCard('photo', e.target.result);
+          reader.onload = (e) => {
+            updateCard('photo', e.target.result);
+            // Reset input so same file can be selected again
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          };
           reader.readAsDataURL(file);
+        }
+      };
+
+      const handleUploadClick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (fileInputRef.current) {
+          fileInputRef.current.click();
         }
       };
 
@@ -3544,12 +3623,19 @@
                   <div className="edit-section">
                     <h3>PHOTO</h3>
                     <div className="photo-options">
-                      <label className="photo-upload-area">
+                      <div className="photo-upload-area" onClick={handleUploadClick} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleUploadClick(e); } }}>
                         <div className="upload-text">
                           {currentCard?.photo ? 'CHANGE' : 'UPLOAD'}
                         </div>
-                        <input type="file" accept="image/*" onChange={handlePhotoUpload} />
-                      </label>
+                        <input 
+                          ref={fileInputRef}
+                          id="photo-upload-input"
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handlePhotoUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </div>
                       <div className="photo-camera-area" onClick={handleCameraClick}>
                         <div className="camera-text">
                           {currentCard?.photo ? 'RETAKE' : 'CAMERA'}
@@ -3797,6 +3883,7 @@
         }
         
         setTimeout(() => container.remove(), 2500);
+        
       };
 
       return (
@@ -3934,15 +4021,26 @@
         const target = e.target;
         const { clientX, clientY } = getClientCoords(e);
         
-        if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
-          if (!isTouch) e.preventDefault();
+        // Check what we're interacting with first
+        const isResizeHandle = target.classList.contains('resize-handle') || target.closest('.resize-handle');
+        const isRotateHandle = target.classList.contains('rotate-handle') || target.closest('.rotate-handle');
+        const isHandle = isResizeHandle || isRotateHandle;
+        
+        // Prevent default for all touch interactions
+        if (isTouch) {
+          e.preventDefault();
+          e.stopPropagation();
+        } else if (isHandle) {
+          e.preventDefault();
+        }
+        
+        if (isResizeHandle) {
           setIsResizing(true);
           const rect = elementRef.current.getBoundingClientRect();
           resizeStartRef.current = { x: clientX, y: clientY, width: rect.width, height: rect.height };
           return;
         }
-        if (target.classList.contains('rotate-handle') || target.closest('.rotate-handle')) {
-          if (!isTouch) e.preventDefault();
+        if (isRotateHandle) {
           setIsRotating(true);
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
@@ -3950,14 +4048,18 @@
           rotateStartRef.current = { x: clientX, y: clientY, angle: rotation, centerX, centerY };
           return;
         }
-        if (!isTouch) e.preventDefault();
         setIsDragging(true);
         const rect = elementRef.current.getBoundingClientRect();
         dragOffsetRef.current = { x: clientX - rect.left, y: clientY - rect.top };
       };
 
       const handleMouseDown = (e) => handleStart(e, false);
-      const handleTouchStart = (e) => handleStart(e, true);
+      const handleTouchStart = (e) => {
+        // Prevent default immediately for touch to avoid scrolling
+        e.preventDefault();
+        e.stopPropagation();
+        handleStart(e, true);
+      };
 
       const handleMove = useCallback((e) => {
         const { clientX, clientY } = getClientCoords(e);
@@ -4049,7 +4151,7 @@
           {!readOnly && (
             <>
               <div className="resize-handle"></div>
-              <div className="rotate-handle" style={{ transform: `translateX(-50%) rotate(${-rotation}deg)` }}></div>
+              <div className="rotate-handle" style={{ transform: `rotate(${-rotation}deg)` }}></div>
             </>
           )}
         </div>
@@ -4132,15 +4234,26 @@
         const target = e.target;
         const { clientX, clientY } = getClientCoords(e);
         
-        if (target.classList.contains('resize-handle') || target.closest('.resize-handle')) {
-          if (!isTouch) e.preventDefault();
+        // Check what we're interacting with first
+        const isResizeHandle = target.classList.contains('resize-handle') || target.closest('.resize-handle');
+        const isRotateHandle = target.classList.contains('rotate-handle') || target.closest('.rotate-handle');
+        const isHandle = isResizeHandle || isRotateHandle;
+        
+        // Prevent default for all touch interactions
+        if (isTouch) {
+          e.preventDefault();
+          e.stopPropagation();
+        } else if (isHandle) {
+          e.preventDefault();
+        }
+        
+        if (isResizeHandle) {
           setIsResizing(true);
           const rect = elementRef.current.getBoundingClientRect();
           resizeStartRef.current = { x: clientX, y: clientY, width: rect.width, height: rect.height };
           return;
         }
-        if (target.classList.contains('rotate-handle') || target.closest('.rotate-handle')) {
-          if (!isTouch) e.preventDefault();
+        if (isRotateHandle) {
           setIsRotating(true);
           const rect = elementRef.current.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
@@ -4148,14 +4261,18 @@
           rotateStartRef.current = { x: clientX, y: clientY, angle: rotation, centerX, centerY };
           return;
         }
-        if (!isTouch) e.preventDefault();
         setIsDragging(true);
         const rect = elementRef.current.getBoundingClientRect();
         dragOffsetRef.current = { x: clientX - rect.left, y: clientY - rect.top };
       };
 
       const handleMouseDown = (e) => handleStart(e, false);
-      const handleTouchStart = (e) => handleStart(e, true);
+      const handleTouchStart = (e) => {
+        // Prevent default immediately for touch to avoid scrolling
+        e.preventDefault();
+        e.stopPropagation();
+        handleStart(e, true);
+      };
 
       const handleMove = useCallback((e) => {
         const { clientX, clientY } = getClientCoords(e);
@@ -4243,7 +4360,7 @@
             backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            zIndex: 1,
+            zIndex: 3, /* Layer 3: Image_bg (above background) */
             touchAction: 'none',
           }}
           onMouseDown={handleMouseDown}
@@ -4252,7 +4369,7 @@
           {!readOnly && (
             <>
               <div className="resize-handle"></div>
-              <div className="rotate-handle" style={{ transform: `translateX(-50%) rotate(${-rotation}deg)` }}></div>
+              <div className="rotate-handle" style={{ transform: `rotate(${-rotation}deg)` }}></div>
             </>
           )}
         </div>

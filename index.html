@@ -791,15 +791,13 @@
       overflow: hidden;
     }
     
-    .photo-upload-area input { 
+    /* File input is hidden but still accessible */
+    .photo-upload-area input[type="file"] {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      width: 0;
+      height: 0;
       opacity: 0;
-      cursor: pointer;
-      z-index: 1;
+      pointer-events: none;
     }
 
     /* Mobile: Ensure upload area is touchable */
@@ -2900,17 +2898,25 @@
         updateCard('completed', true);
         localStorage.setItem('lnyGiftSession', JSON.stringify(session));
         
-        // Go to next card if available, otherwise back to list
+        // Go to next card if available
         const nextDay = editingDay + 1;
         if (nextDay <= 6) {
           setEditingDay(nextDay);
           setEditorView('edit');
-          // Open mobile panel when navigating to next card
+          // Open mobile panel when navigating to next card on mobile
           if (window.innerWidth <= 768) {
             setMobilePanelOpen(true);
           }
         } else {
-          handleBackToList();
+          // Last card completed - show date picker on desktop, go to list on mobile
+          if (window.innerWidth > 768) {
+            // Desktop: Show date picker modal
+            setTempStartDate(session.startDate || '');
+            setShowDateModal(true);
+          } else {
+            // Mobile: Go back to list
+            handleBackToList();
+          }
         }
         setMobilePanelOpen(false); // Close mobile panel after saving
       };
@@ -3079,29 +3085,33 @@
       const fileInputRef = useRef(null);
 
       const handlePhotoUpload = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
           const reader = new FileReader();
-          reader.onload = (e) => {
-            updateCard('photo', e.target.result);
+          reader.onload = (event) => {
+            const dataUrl = event.target.result;
+            updateCard('photo', dataUrl);
+            // Force a re-render by updating session
+            setSession(prev => ({ ...prev }));
             // Reset input so same file can be selected again
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
+          };
+          reader.onerror = (error) => {
+            console.error('Error reading file:', error);
           };
           reader.readAsDataURL(file);
         }
       };
 
       const handleUploadClick = (e) => {
-        // Ensure the file input is clicked
-        e.stopPropagation();
-        // Use setTimeout to ensure the click happens after any event propagation
-        setTimeout(() => {
-          if (fileInputRef.current) {
-            fileInputRef.current.click();
-          }
-        }, 10);
+        // On desktop, let the label handle it naturally, but ensure input is clickable
+        // Only programmatically click if the input isn't already being triggered
+        if (fileInputRef.current && !fileInputRef.current.matches(':focus')) {
+          e.preventDefault();
+          fileInputRef.current.click();
+        }
       };
 
       // Camera handlers
@@ -3634,22 +3644,17 @@
                   <div className="edit-section">
                     <h3>PHOTO</h3>
                     <div className="photo-options">
-                      <label 
-                        className="photo-upload-area" 
-                        htmlFor="photo-upload-input"
-                        role="button" 
-                        tabIndex={0}
-                        onClick={handleUploadClick}
-                      >
-                        <div className="upload-text">
+                      <label className="photo-upload-area" htmlFor="photo-upload-input-label">
+                        <span className="upload-text">
                           {currentCard?.photo ? 'CHANGE' : 'UPLOAD'}
-                        </div>
+                        </span>
                         <input 
                           ref={fileInputRef}
-                          id="photo-upload-input"
+                          id="photo-upload-input-label"
                           type="file" 
                           accept="image/*"
                           onChange={handlePhotoUpload}
+                          style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
                         />
                       </label>
                       <div className="photo-camera-area" onClick={handleCameraClick}>
@@ -3686,8 +3691,10 @@
                   PREVIEW AND SEND
                 </button>
               ) : (
-                <button className="btn-primary" onClick={handleSaveCard}>
-                  Save Day {editingDay}
+                <button className="btn-primary" onClick={editingDay === 6 ? () => {
+                  handleSaveCard();
+                } : handleSaveCard}>
+                  {editingDay === 6 ? 'FINISH AND SEND' : `Save Day ${editingDay} →`}
                 </button>
               )}
             </div>

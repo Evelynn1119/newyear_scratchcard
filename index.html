@@ -2744,42 +2744,113 @@
       return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
+    // Store data to JSONBlob and return blob ID
+    async function storeToJsonBlob(data) {
+      try {
+        const response = await fetch('https://jsonblob.com/api/jsonBlob', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+          // Get blob ID from Location header
+          const location = response.headers.get('Location');
+          if (location) {
+            const blobId = location.split('/').pop();
+            return blobId;
+          }
+        }
+        throw new Error('Failed to store data');
+      } catch (error) {
+        console.error('JSONBlob storage error:', error);
+        return null;
+      }
+    }
+
+    // Fetch data from JSONBlob by ID
+    async function fetchFromJsonBlob(blobId) {
+      try {
+        const response = await fetch(`https://jsonblob.com/api/jsonBlob/${blobId}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          return await response.json();
+        }
+        throw new Error('Failed to fetch data');
+      } catch (error) {
+        console.error('JSONBlob fetch error:', error);
+        return null;
+      }
+    }
+
     // Generate SHARE link (for recipients to scratch - read-only)
-    function generateShareURL(giftData) {
+    async function generateShareURL(giftData) {
+      const blobId = await storeToJsonBlob({ type: 'gift', data: giftData });
+      if (blobId) {
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?id=${blobId}`;
+      }
+      // Fallback to old method if storage fails
       const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(giftData))));
       const baseUrl = window.location.origin + window.location.pathname;
       return `${baseUrl}?gift=${encoded}`;
     }
 
     // Generate EDIT link (for creator to continue editing)
-    function generateEditURL(sessionData) {
+    async function generateEditURL(sessionData) {
+      const blobId = await storeToJsonBlob({ type: 'edit', data: sessionData });
+      if (blobId) {
+        const baseUrl = window.location.origin + window.location.pathname;
+        return `${baseUrl}?id=${blobId}`;
+      }
+      // Fallback to old method if storage fails
       const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(sessionData))));
       const baseUrl = window.location.origin + window.location.pathname;
       return `${baseUrl}?edit=${encoded}`;
     }
 
-    // Parse URL parameters - check for both 'gift' (recipient) and 'edit' (creator)
-    function parseGiftFromURL() {
+    // Parse URL parameters - check for 'id' (new short), 'gift', or 'edit' (legacy)
+    async function parseGiftFromURL() {
       const params = new URLSearchParams(window.location.search);
+      const idParam = params.get('id');
       const giftParam = params.get('gift');
       const editParam = params.get('edit');
       
-      // If 'edit' param exists, load session for editing
+      // New short URL format with blob ID
+      if (idParam) {
+        const stored = await fetchFromJsonBlob(idParam);
+        if (stored) {
+          if (stored.type === 'edit') {
+            localStorage.setItem('lnyGiftSession', JSON.stringify(stored.data));
+            return { type: 'edit', data: null };
+          } else if (stored.type === 'gift') {
+            return { type: 'gift', data: stored.data };
+          }
+        }
+      }
+      
+      // Legacy: If 'edit' param exists, load session for editing
       if (editParam) {
         try {
           const sessionData = JSON.parse(decodeURIComponent(escape(atob(editParam))));
-          // Store in localStorage for editing
           localStorage.setItem('lnyGiftSession', JSON.stringify(sessionData));
-          return null; // Return null so it goes to editor mode
+          return { type: 'edit', data: null };
         } catch (e) {
           console.error('Failed to parse edit data');
         }
       }
       
-      // If 'gift' param exists, load for recipient (read-only)
+      // Legacy: If 'gift' param exists, load for recipient (read-only)
       if (giftParam) {
         try {
-          return JSON.parse(decodeURIComponent(escape(atob(giftParam))));
+          return { type: 'gift', data: JSON.parse(decodeURIComponent(escape(atob(giftParam)))) };
         } catch (e) {
           console.error('Failed to parse gift data');
         }
@@ -2790,11 +2861,12 @@
 
     // ========== MAIN APP ==========
     function App() {
-      const [giftData] = useState(() => parseGiftFromURL());
-      const isRecipientMode = giftData !== null;
+      const [isLoading, setIsLoading] = useState(true);
+      const [giftData, setGiftData] = useState(null);
+      const [isRecipientMode, setIsRecipientMode] = useState(false);
 
       // Modes: 'editor', 'preview'
-      const [mode, setMode] = useState(isRecipientMode ? 'preview' : 'editor');
+      const [mode, setMode] = useState('editor');
       const [editorView, setEditorView] = useState('list');
       const [editingDay, setEditingDay] = useState(null);
       
@@ -2804,6 +2876,7 @@
       const [editURL, setEditURL] = useState('');
       const [copied, setCopied] = useState('');
       const [copiedType, setCopiedType] = useState(''); // 'share' or 'edit'
+      const [isGeneratingLink, setIsGeneratingLink] = useState(false);
       
       // Date picker modal
       const [showDateModal, setShowDateModal] = useState(false);
@@ -2817,25 +2890,53 @@
       // Mobile panel state
       const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
 
+      // Default session data
+      const getDefaultSession = () => ({
+        startDate: '',
+        cards: {
+          1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+          2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+          3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+          4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+          5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+          6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
+        }
+      });
+
       // Session data
       const [session, setSession] = useState(() => {
-        if (isRecipientMode) return giftData;
         const saved = localStorage.getItem('lnyGiftSession');
         if (saved) {
           try { return JSON.parse(saved); } catch (e) {}
         }
-        return {
-          startDate: '',
-          cards: {
-            1: { template: 'template1', imageBg: 'imageBg1', title: 'I LOVE YOU', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'ADD A SELFIE OF YOU AND SHOW YOUR LOVE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-            2: { template: 'template2', imageBg: 'imageBg2', title: 'THIS IS MY PLAY LIST !', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SHARE A PLAYLIST WITH YOUR FRIEND!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-            3: { template: 'template3', imageBg: 'imageBg3', title: 'The Lucky Charm', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND YOUR FRIEND A HORSE IMAGE WISH THEM A GOOD LUCK IN THE YEAR OF THE HORSE !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-            4: { template: 'template4', imageBg: 'imageBg4', title: 'A LITTLE GIFT FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'SEND THEM A DIGITAL GIFT CARD !', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-            5: { template: 'template1', imageBg: 'imageBg5', title: 'A LITTLE MESSAGE FROM ME', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'INPUT YOUR VIDEO TO SPICE IT UP', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-            6: { template: 'template2', imageBg: 'imageBg6', title: 'THIS IS MY TREAT', titleSize: 'mid', titleColor: 'white', titleBold: false, titleItalic: false, subtitle: 'A LITTLE DATE WITH ME SAVED!', subtitleSize: 'mid', subtitleColor: 'white', subtitleBold: false, subtitleItalic: true, photo: null, photoTransform: { x: 50, y: 50, width: 180, height: 180, rotation: 0 }, imageFrameTransform: { width: 350, height: 350, rotation: 0 }, emojis: [], completed: false },
-          }
-        };
+        return getDefaultSession();
       });
+
+      // Load data from URL on mount
+      useEffect(() => {
+        const loadFromURL = async () => {
+          const result = await parseGiftFromURL();
+          if (result) {
+            if (result.type === 'gift' && result.data) {
+              setGiftData(result.data);
+              setSession(result.data);
+              setIsRecipientMode(true);
+              setMode('preview');
+            } else if (result.type === 'edit') {
+              // Data was stored in localStorage by parseGiftFromURL
+              const saved = localStorage.getItem('lnyGiftSession');
+              if (saved) {
+                try { 
+                  setSession(JSON.parse(saved)); 
+                } catch (e) {}
+              }
+              setMode('editor');
+            }
+          }
+          setIsLoading(false);
+        };
+        loadFromURL();
+      }, []);
 
       // Revealed cards
       const [revealedCards, setRevealedCards] = useState(() => {
@@ -2928,8 +3029,10 @@
       };
 
       // Confirm date and generate
-      const handleConfirmDate = () => {
+      const handleConfirmDate = async () => {
         if (!tempStartDate) return;
+        
+        setIsGeneratingLink(true);
         
         const updatedSession = {
           ...session,
@@ -2939,11 +3042,15 @@
         setSession(updatedSession);
         localStorage.setItem('lnyGiftSession', JSON.stringify(updatedSession));
         
-        // Generate both links
-        const shareLink = generateShareURL(updatedSession);
-        const editLink = generateEditURL(updatedSession);
+        // Generate both links (async)
+        const [shareLink, editLink] = await Promise.all([
+          generateShareURL(updatedSession),
+          generateEditURL(updatedSession)
+        ]);
+        
         setShareURL(shareLink);
         setEditURL(editLink);
+        setIsGeneratingLink(false);
         setShowDateModal(false);
         setMode('preview');
       };
@@ -2958,13 +3065,19 @@
       };
 
       // Open share modal
-      const handleOpenShare = () => {
-        // Generate both links
-        const shareLink = generateShareURL(session);
-        const editLink = generateEditURL(session);
+      const handleOpenShare = async () => {
+        setIsGeneratingLink(true);
+        setShowShareModal(true);
+        
+        // Generate both links (async)
+        const [shareLink, editLink] = await Promise.all([
+          generateShareURL(session),
+          generateEditURL(session)
+        ]);
+        
         setShareURL(shareLink);
         setEditURL(editLink);
-        setShowShareModal(true);
+        setIsGeneratingLink(false);
       };
 
       // Copy link (either share or edit)
@@ -3252,6 +3365,16 @@
         ? TEMPLATES.find(t => t.id === currentCard.template) 
         : null;
 
+      // ========== LOADING STATE ==========
+      if (isLoading) {
+        return (
+          <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎁</div>
+            <p style={{ color: 'var(--accent-primary)', fontFamily: 'Cormorant Garamond, serif' }}>Loading your gift...</p>
+          </div>
+        );
+      }
+
       // ========== PREVIEW MODE ==========
       if (mode === 'preview') {
         return (
@@ -3338,31 +3461,40 @@
                   <button className="modal-close" onClick={() => setShowShareModal(false)}>×</button>
                   <h2>Share Your Gift</h2>
                   
-                  {/* Share Link (for recipients) */}
-                  <div className="share-link-section">
-                    <h3>📤 Share Link (For Your Friends)</h3>
-                    <p className="link-description">Send this link to your friend so they can scratch and reveal your surprises!</p>
-                    <div className="share-url-box">{shareURL}</div>
-                    <button 
-                      className={`copy-btn ${copiedType === 'share' ? 'copied' : ''}`} 
-                      onClick={() => handleCopyLink('share')}
-                    >
-                      {copiedType === 'share' ? '✓ Copied!' : 'Copy Share Link'}
-                    </button>
-                  </div>
+                  {isGeneratingLink ? (
+                    <div style={{ textAlign: 'center', padding: '2rem' }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>✨</div>
+                      <p>Creating your short share link...</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Share Link (for recipients) */}
+                      <div className="share-link-section">
+                        <h3>📤 Share Link (For Your Friends)</h3>
+                        <p className="link-description">Send this short link to your friend so they can scratch and reveal your surprises!</p>
+                        <div className="share-url-box" style={{ wordBreak: 'break-all', fontSize: shareURL.length > 80 ? '0.7rem' : '0.85rem' }}>{shareURL}</div>
+                        <button 
+                          className={`copy-btn ${copiedType === 'share' ? 'copied' : ''}`} 
+                          onClick={() => handleCopyLink('share')}
+                        >
+                          {copiedType === 'share' ? '✓ Copied!' : 'Copy Share Link'}
+                        </button>
+                      </div>
 
-                  {/* Edit Link (for creator) */}
-                  <div className="share-link-section" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-                    <h3>✏️ Edit Link (For You)</h3>
-                    <p className="link-description">Save this link to continue editing your cards later!</p>
-                    <div className="share-url-box">{editURL}</div>
-                    <button 
-                      className={`copy-btn ${copiedType === 'edit' ? 'copied' : ''}`} 
-                      onClick={() => handleCopyLink('edit')}
-                    >
-                      {copiedType === 'edit' ? '✓ Copied!' : 'Copy Edit Link'}
-                    </button>
-                  </div>
+                      {/* Edit Link (for creator) */}
+                      <div className="share-link-section" style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                        <h3>✏️ Edit Link (For You)</h3>
+                        <p className="link-description">Save this link to continue editing your cards later!</p>
+                        <div className="share-url-box" style={{ wordBreak: 'break-all', fontSize: editURL.length > 80 ? '0.7rem' : '0.85rem' }}>{editURL}</div>
+                        <button 
+                          className={`copy-btn ${copiedType === 'edit' ? 'copied' : ''}`} 
+                          onClick={() => handleCopyLink('edit')}
+                        >
+                          {copiedType === 'edit' ? '✓ Copied!' : 'Copy Edit Link'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

@@ -2791,21 +2791,30 @@
       return compressed;
     }
 
-    // Store data to jsonbin.io (free tier - no API key needed for public bins)
+    // Generate a unique ID for storing data
+    function generateUniqueId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+    }
+
+    // Store data to jsonbox.io (free, no auth required, CORS friendly)
     async function storeData(data) {
       try {
-        // Try paste.rs first (super simple, no auth needed)
-        const jsonString = JSON.stringify(data);
-        const response = await fetch('https://paste.rs/', {
+        // Use jsonbox.io - free JSON storage with no authentication
+        const boxId = 'lny_gift_cards_2024'; // Shared box for all users
+        const response = await fetch(`https://jsonbox.io/${boxId}`, {
           method: 'POST',
-          body: jsonString
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
         });
         
         if (response.ok) {
-          const url = await response.text();
-          // Extract the paste ID from the URL (e.g., https://paste.rs/abc -> abc)
-          const pasteId = url.trim().split('/').pop();
-          return pasteId;
+          const result = await response.json();
+          // jsonbox returns _id for the record
+          if (result && result._id) {
+            return result._id;
+          }
         }
         throw new Error('Failed to store data');
       } catch (error) {
@@ -2814,14 +2823,15 @@
       }
     }
 
-    // Fetch data from paste.rs by ID
-    async function fetchData(pasteId) {
+    // Fetch data from jsonbox.io by ID
+    async function fetchData(recordId) {
       try {
-        const response = await fetch(`https://paste.rs/${pasteId}`);
+        const boxId = 'lny_gift_cards_2024';
+        const response = await fetch(`https://jsonbox.io/${boxId}/${recordId}`);
         
         if (response.ok) {
-          const text = await response.text();
-          return JSON.parse(text);
+          const result = await response.json();
+          return result;
         }
         throw new Error('Failed to fetch data');
       } catch (error) {

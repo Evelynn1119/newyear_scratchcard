@@ -441,6 +441,27 @@
       transform: translateY(-50%) translateX(-2px);
     }
 
+    .start-fresh-btn {
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.9);
+      border: 1px solid var(--accent-primary);
+      color: var(--accent-primary);
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .start-fresh-btn:hover {
+      background: var(--accent-primary);
+      color: white;
+    }
+
     .panel-content {
       flex: 1;
       overflow-y: auto;
@@ -3687,6 +3708,23 @@
                 <button className="back-btn" onClick={handleBackToList}>←</button>
               )}
               <h1>{editorView === 'edit' ? DAYS_CONFIG.find(d => d.id === editingDay)?.emoji : 'EDIT YOUR CARDS!'}</h1>
+              {editorView === 'list' && (
+                <button 
+                  className="start-fresh-btn" 
+                  onClick={() => {
+                    if (confirm('Start fresh? This will clear all your current designs.')) {
+                      localStorage.removeItem('lnyGiftSession');
+                      localStorage.removeItem('lnyRevealedCards');
+                      localStorage.removeItem('lnyHappyNewYearShown');
+                      setSession(getDefaultSession());
+                      setRevealedCards({});
+                    }
+                  }}
+                  title="Clear all and start fresh"
+                >
+                  🔄 New
+                </button>
+              )}
             </div>
 
             <div className="panel-content">

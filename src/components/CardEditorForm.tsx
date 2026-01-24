@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { CardEditorFormProps } from '@/lib/types';
 
 /**
@@ -8,11 +8,12 @@ import { CardEditorFormProps } from '@/lib/types';
  * 
  * Users can:
  * - Edit the message text
- * - Upload their own photo
+ * - Upload their own photo (including HEIC format)
  * - Add title and subtitle
  */
 export default function CardEditorForm({ data, onUpdate }: CardEditorFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     onUpdate({
@@ -35,15 +36,48 @@ export default function CardEditorForm({ data, onUpdate }: CardEditorFormProps) 
     });
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Create a temporary URL for the uploaded image
-      const blobUrl = URL.createObjectURL(file);
-      onUpdate({
-        ...data,
-        imageSrc: blobUrl,
-      });
+      // Check if file is HEIC/HEIF format
+      const isHeic = file.type === 'image/heic' || 
+                     file.type === 'image/heif' || 
+                     file.name.toLowerCase().endsWith('.heic') || 
+                     file.name.toLowerCase().endsWith('.heif');
+      
+      if (isHeic) {
+        setIsConverting(true);
+        try {
+          // Dynamically import heic2any for client-side conversion
+          const heic2any = (await import('heic2any')).default;
+          const convertedBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.9,
+          });
+          
+          // heic2any can return a single blob or an array
+          const resultBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+          const blobUrl = URL.createObjectURL(resultBlob);
+          
+          onUpdate({
+            ...data,
+            imageSrc: blobUrl,
+          });
+        } catch (error) {
+          console.error('Failed to convert HEIC image:', error);
+          alert('無法轉換 HEIC 圖片，請嘗試使用其他格式（如 JPG 或 PNG）');
+        } finally {
+          setIsConverting(false);
+        }
+      } else {
+        // For non-HEIC images, use directly
+        const blobUrl = URL.createObjectURL(file);
+        onUpdate({
+          ...data,
+          imageSrc: blobUrl,
+        });
+      }
     }
   };
 
@@ -187,12 +221,13 @@ export default function CardEditorForm({ data, onUpdate }: CardEditorFormProps) 
               transition: 'all 0.2s',
             }}
           >
-            📷 {data.imageSrc ? 'Change Photo' : 'Upload Photo'}
+            {isConverting ? '⏳ 轉換中...' : `📷 ${data.imageSrc ? 'Change Photo' : 'Upload Photo'}`}
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               onChange={handlePhotoChange}
+              disabled={isConverting}
               style={{ display: 'none' }}
             />
           </label>
@@ -283,6 +318,7 @@ export default function CardEditorForm({ data, onUpdate }: CardEditorFormProps) 
         <ul style={{ margin: '0.5rem 0 0 1rem', paddingLeft: '0.5rem' }}>
           <li>Keep your message short and sweet</li>
           <li>Square or landscape photos work best</li>
+          <li>支援 HEIC/HEIF 格式（iPhone 照片）</li>
           <li>The preview updates in real-time!</li>
         </ul>
       </div>

@@ -3292,16 +3292,64 @@
 
       const [isConvertingPhoto, setIsConvertingPhoto] = useState(false);
 
-      // Test if browser can display an image
+      // Compress image using canvas - reduces file size for large iOS photos
+      const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          const url = URL.createObjectURL(file);
+          
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            
+            // Calculate new dimensions
+            let { width, height } = img;
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+            
+            // Draw to canvas and compress
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to data URL
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            console.log('Image compressed:', file.size, '->', dataUrl.length);
+            resolve(dataUrl);
+          };
+          
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to load image'));
+          };
+          
+          img.src = url;
+        });
+      };
+
+      // Test if browser can display an image (with timeout)
       const canDisplayImage = (blob) => {
         return new Promise((resolve) => {
           const img = new Image();
           const url = URL.createObjectURL(blob);
+          
+          // Timeout after 5 seconds
+          const timeout = setTimeout(() => {
+            URL.revokeObjectURL(url);
+            console.log('canDisplayImage timeout');
+            resolve(false);
+          }, 5000);
+          
           img.onload = () => {
+            clearTimeout(timeout);
             URL.revokeObjectURL(url);
             resolve(true);
           };
           img.onerror = () => {
+            clearTimeout(timeout);
             URL.revokeObjectURL(url);
             resolve(false);
           };
@@ -3319,66 +3367,75 @@
                        file.name.toLowerCase().endsWith('.heic') || 
                        file.name.toLowerCase().endsWith('.heif');
         
-        console.log('File selected:', file.name, 'Type:', file.type, 'Is HEIC:', isHeic);
+        console.log('File selected:', file.name, 'Type:', file.type, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB', 'Is HEIC:', isHeic);
         
         setIsConvertingPhoto(true);
         
-        // First, try to display the image directly (Safari supports HEIC natively)
-        const canDisplay = await canDisplayImage(file);
-        console.log('Browser can display directly:', canDisplay);
-        
-        if (canDisplay) {
-          // Browser supports this format natively
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            updateCard('photo', event.target.result);
-            setSession(prev => ({ ...prev }));
+        try {
+          // First, try to display the image directly (Safari supports HEIC natively)
+          const canDisplay = await canDisplayImage(file);
+          console.log('Browser can display directly:', canDisplay);
+          
+          if (canDisplay) {
+            // Browser supports this format - compress and save
+            try {
+              const compressedDataUrl = await compressImage(file);
+              updateCard('photo', compressedDataUrl);
+              console.log('Photo uploaded and compressed successfully');
+            } catch (compressError) {
+              console.error('Compression failed, using original:', compressError);
+              // Fallback to blob URL if compression fails
+              const blobUrl = URL.createObjectURL(file);
+              updateCard('photo', blobUrl);
+            }
             if (fileInputRef.current) fileInputRef.current.value = '';
             setIsConvertingPhoto(false);
-          };
-          reader.onerror = () => {
-            console.error('Error reading file');
-            setIsConvertingPhoto(false);
-          };
-          reader.readAsDataURL(file);
-          return;
-        }
-        
-        // Browser can't display natively, try to convert HEIC
-        if (isHeic) {
-          // Check if heic2any is available
-          if (typeof heic2any === 'undefined') {
-            alert('你的瀏覽器不支援 HEIC 格式。\n\n解決方法：\n1. 使用 Safari 瀏覽器（原生支援 HEIC）\n2. 或者先把照片轉成 JPG/PNG 格式再上傳');
-            setIsConvertingPhoto(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
           }
           
-          try {
-            console.log('Starting HEIC conversion...');
-            const convertedBlob = await heic2any({
-              blob: file,
-              toType: 'image/jpeg',
-              quality: 0.85,
-            });
+          // Browser can't display natively, try to convert HEIC
+          if (isHeic) {
+            // Check if heic2any is available
+            if (typeof heic2any === 'undefined') {
+              alert('你的瀏覽器不支援 HEIC 格式。\n\n解決方法：\n1. 使用 Safari 瀏覽器（原生支援 HEIC）\n2. 或者先把照片轉成 JPG/PNG 格式再上傳');
+              setIsConvertingPhoto(false);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+              return;
+            }
             
-            const resultBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            const blobUrl = URL.createObjectURL(resultBlob);
-            
-            updateCard('photo', blobUrl);
-            setSession(prev => ({ ...prev }));
-            if (fileInputRef.current) fileInputRef.current.value = '';
-            setIsConvertingPhoto(false);
-            console.log('HEIC conversion successful');
-          } catch (error) {
-            console.error('HEIC conversion failed:', error);
-            alert('無法轉換此 HEIC 圖片。\n\n解決方法：\n1. 使用 Safari 瀏覽器（原生支援 HEIC）\n2. 在 iPhone 設定 > 相機 > 格式，選擇「最相容」\n3. 或者用其他 App 把照片轉成 JPG 再上傳');
+            try {
+              console.log('Starting HEIC conversion...');
+              const convertedBlob = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.85,
+              });
+              
+              const resultBlob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+              
+              // Compress the converted image
+              const compressedDataUrl = await compressImage(resultBlob);
+              updateCard('photo', compressedDataUrl);
+              
+              if (fileInputRef.current) fileInputRef.current.value = '';
+              setIsConvertingPhoto(false);
+              console.log('HEIC conversion successful');
+            } catch (error) {
+              console.error('HEIC conversion failed:', error);
+              alert('無法轉換此 HEIC 圖片。\n\n解決方法：\n1. 使用 Safari 瀏覽器（原生支援 HEIC）\n2. 在 iPhone 設定 > 相機 > 格式，選擇「最相容」\n3. 或者用其他 App 把照片轉成 JPG 再上傳');
+              setIsConvertingPhoto(false);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+            }
+          } else {
+            // Non-HEIC file that browser can't display (shouldn't happen often)
+            alert('無法顯示此圖片格式，請使用 JPG 或 PNG。');
             setIsConvertingPhoto(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
           }
-        } else {
-          // Non-HEIC file that browser can't display (shouldn't happen often)
-          alert('無法顯示此圖片格式，請使用 JPG 或 PNG。');
+        } catch (error) {
+          // Catch any unexpected errors
+          console.error('Unexpected error during photo upload:', error);
+          alert('上傳照片時發生錯誤，請重試。');
           setIsConvertingPhoto(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }

@@ -28,6 +28,9 @@
   <!-- Babel for JSX -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
+  <!-- HEIC to JPEG converter for iPhone photos -->
+  <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  
   <style>
     :root {
       /* Dreamy Boutique Brand Colors */
@@ -3268,9 +3271,39 @@
 
       const fileInputRef = useRef(null);
 
-      const handlePhotoUpload = (e) => {
+      const [isConvertingPhoto, setIsConvertingPhoto] = useState(false);
+
+      const handlePhotoUpload = async (e) => {
         const file = e.target.files?.[0];
         if (file) {
+          // Check if file is HEIC/HEIF format
+          const isHeic = file.type === 'image/heic' || 
+                         file.type === 'image/heif' || 
+                         file.name.toLowerCase().endsWith('.heic') || 
+                         file.name.toLowerCase().endsWith('.heif');
+          
+          let processedFile = file;
+          
+          if (isHeic) {
+            setIsConvertingPhoto(true);
+            try {
+              // Convert HEIC to JPEG using heic2any
+              const convertedBlob = await heic2any({
+                blob: file,
+                toType: 'image/jpeg',
+                quality: 0.9,
+              });
+              
+              // heic2any can return a single blob or an array
+              processedFile = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            } catch (error) {
+              console.error('Failed to convert HEIC image:', error);
+              alert('無法轉換 HEIC 圖片，請嘗試使用其他格式（如 JPG 或 PNG）');
+              setIsConvertingPhoto(false);
+              return;
+            }
+          }
+          
           const reader = new FileReader();
           reader.onload = (event) => {
             const dataUrl = event.target.result;
@@ -3281,11 +3314,13 @@
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
+            setIsConvertingPhoto(false);
           };
           reader.onerror = (error) => {
             console.error('Error reading file:', error);
+            setIsConvertingPhoto(false);
           };
-          reader.readAsDataURL(file);
+          reader.readAsDataURL(processedFile);
         }
       };
 
@@ -3864,20 +3899,21 @@
                   <div className="edit-section">
                     <h3>PHOTO</h3>
                     <div className="photo-options">
-                      <label className="photo-upload-area" htmlFor="photo-upload-input-label">
+                      <label className="photo-upload-area" htmlFor="photo-upload-input-label" style={{ opacity: isConvertingPhoto ? 0.6 : 1, pointerEvents: isConvertingPhoto ? 'none' : 'auto' }}>
                         <span className="upload-text">
-                          {currentCard?.photo ? 'CHANGE' : 'UPLOAD'}
+                          {isConvertingPhoto ? '轉換中...' : (currentCard?.photo ? 'CHANGE' : 'UPLOAD')}
                         </span>
                         <input 
                           ref={fileInputRef}
                           id="photo-upload-input-label"
                           type="file" 
-                          accept="image/*"
+                          accept="image/*,.heic,.heif"
                           onChange={handlePhotoUpload}
+                          disabled={isConvertingPhoto}
                           style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}
                         />
                       </label>
-                      <div className="photo-camera-area" onClick={handleCameraClick}>
+                      <div className="photo-camera-area" onClick={handleCameraClick} style={{ opacity: isConvertingPhoto ? 0.6 : 1, pointerEvents: isConvertingPhoto ? 'none' : 'auto' }}>
                         <div className="camera-text">
                           {currentCard?.photo ? 'RETAKE' : 'CAMERA'}
                         </div>

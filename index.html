@@ -3275,45 +3275,74 @@
 
       const handlePhotoUpload = async (e) => {
         const file = e.target.files?.[0];
-        if (file) {
-          // Check if file is HEIC/HEIF format
-          const isHeic = file.type === 'image/heic' || 
-                         file.type === 'image/heif' || 
-                         file.name.toLowerCase().endsWith('.heic') || 
-                         file.name.toLowerCase().endsWith('.heif');
+        if (!file) return;
+        
+        // Check if file is HEIC/HEIF format
+        const isHeic = file.type === 'image/heic' || 
+                       file.type === 'image/heif' || 
+                       file.name.toLowerCase().endsWith('.heic') || 
+                       file.name.toLowerCase().endsWith('.heif');
+        
+        console.log('File selected:', file.name, 'Type:', file.type, 'Is HEIC:', isHeic);
+        
+        let processedFile = file;
+        
+        if (isHeic) {
+          setIsConvertingPhoto(true);
           
-          let processedFile = file;
-          
-          if (isHeic) {
-            setIsConvertingPhoto(true);
-            try {
-              // Convert HEIC to JPEG using heic2any
-              const convertedBlob = await heic2any({
-                blob: file,
-                toType: 'image/jpeg',
-                quality: 0.9,
-              });
-              
-              // heic2any can return a single blob or an array
-              processedFile = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-            } catch (error) {
-              console.error('Failed to convert HEIC image:', error);
-              alert('無法轉換 HEIC 圖片，請嘗試使用其他格式（如 JPG 或 PNG）');
-              setIsConvertingPhoto(false);
-              return;
-            }
+          // Check if heic2any is available
+          if (typeof heic2any === 'undefined') {
+            console.error('heic2any library not loaded');
+            alert('HEIC 轉換功能載入失敗。請使用 JPG 或 PNG 格式的照片。');
+            setIsConvertingPhoto(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
           }
           
+          try {
+            console.log('Starting HEIC conversion...');
+            // Convert HEIC to JPEG using heic2any
+            const convertedBlob = await heic2any({
+              blob: file,
+              toType: 'image/jpeg',
+              quality: 0.85,
+            });
+            
+            console.log('HEIC conversion result:', convertedBlob);
+            
+            // heic2any can return a single blob or an array
+            processedFile = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+            console.log('Processed file:', processedFile);
+          } catch (error) {
+            console.error('Failed to convert HEIC image:', error);
+            alert('無法轉換 HEIC 圖片。錯誤: ' + error.message + '\n\n請嘗試使用其他格式（如 JPG 或 PNG）');
+            setIsConvertingPhoto(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+          }
+        }
+        
+        // Use URL.createObjectURL for blobs (converted HEIC), FileReader for original files
+        if (isHeic && processedFile instanceof Blob) {
+          try {
+            const blobUrl = URL.createObjectURL(processedFile);
+            console.log('Created blob URL:', blobUrl);
+            updateCard('photo', blobUrl);
+            setSession(prev => ({ ...prev }));
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            setIsConvertingPhoto(false);
+          } catch (error) {
+            console.error('Error creating blob URL:', error);
+            setIsConvertingPhoto(false);
+          }
+        } else {
           const reader = new FileReader();
           reader.onload = (event) => {
             const dataUrl = event.target.result;
+            console.log('FileReader loaded, dataUrl length:', dataUrl?.length);
             updateCard('photo', dataUrl);
-            // Force a re-render by updating session
             setSession(prev => ({ ...prev }));
-            // Reset input so same file can be selected again
-            if (fileInputRef.current) {
-              fileInputRef.current.value = '';
-            }
+            if (fileInputRef.current) fileInputRef.current.value = '';
             setIsConvertingPhoto(false);
           };
           reader.onerror = (error) => {

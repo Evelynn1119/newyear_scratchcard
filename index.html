@@ -3042,6 +3042,14 @@
         }));
       };
 
+      // Auto-save session to localStorage whenever it changes
+      useEffect(() => {
+        if (session && session.cards) {
+          localStorage.setItem('lnyGiftSession', JSON.stringify(session));
+          console.log('Session auto-saved');
+        }
+      }, [session]);
+
       const updateStartDate = (date) => {
         setSession(prev => ({ ...prev, startDate: date }));
       };
@@ -3070,8 +3078,19 @@
       };
 
       const handleSaveCard = () => {
-        updateCard('completed', true);
-        localStorage.setItem('lnyGiftSession', JSON.stringify(session));
+        // Create updated session with completed flag
+        const updatedSession = {
+          ...session,
+          cards: {
+            ...session.cards,
+            [editingDay]: { ...session.cards[editingDay], completed: true }
+          }
+        };
+        
+        // Update state and save to localStorage
+        setSession(updatedSession);
+        localStorage.setItem('lnyGiftSession', JSON.stringify(updatedSession));
+        console.log('Card saved:', editingDay, updatedSession.cards[editingDay]);
         
         // Go to next card if available
         const nextDay = editingDay + 1;
@@ -3086,7 +3105,7 @@
           // Last card completed - show date picker on desktop, go to list on mobile
           if (window.innerWidth > 768) {
             // Desktop: Show date picker modal
-            setTempStartDate(session.startDate || '');
+            setTempStartDate(updatedSession.startDate || '');
             setShowDateModal(true);
           } else {
             // Mobile: Go back to list
